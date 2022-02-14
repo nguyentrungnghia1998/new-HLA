@@ -14,6 +14,7 @@ def parse_args():
     parser.add_argument('-l', '--loss', type=str, default='mse')
     parser.add_argument('-o', '--optimizer', type=str, default='adam')
     parser.add_argument('-e', '--epochs', type=int, default=1000)
+    parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('-b', '--batch-size', type=int, default=64)
     parser.add_argument('-n', '--n-repeats', type=int, default=1)
     parser.add_argument('-p', '--print-every', type=int, default=1)
@@ -83,7 +84,7 @@ def main():
         dataset['data'].append(data_row)
         dataset['label'].append(label)
     
-    trainset, testset = split_dataset(dataset, 0.8, shuffle=True)
+    # trainset, testset = split_dataset(dataset, 0.8, shuffle=True)
     
     input_size = len(dataset['data'][0])
     outputs_size = [['HLA_' + col, len(df_allele_labels[col].iloc[0])] for col in columns]
@@ -91,11 +92,12 @@ def main():
     
     trainer = Trainer(
         model=SharedNet(input_size, outputs_size),
-        train_loader=trainset,
-        test_loader=testset,
+        train_loader=dataset,
+        test_loader=dataset,
         loss=args.loss,
         optimizer=args.optimizer,
         epochs=args.epochs,
+        lr=args.lr,
         batch_size=args.batch_size,
         n_repeats=args.n_repeats,
         print_every=args.print_every,

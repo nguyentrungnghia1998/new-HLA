@@ -9,6 +9,7 @@ import random
 import json
 import numpy as np
 from torch import optim
+from torchsummary.torchsummary import summary
 
 config = json.load(open('models/config.json'))
 
@@ -133,3 +134,12 @@ class SharedNet(nn.Module):
             model_name = self.name + '_model'
         self.load_state_dict(torch.load("{}/{}.pt".format(path, model_name)))
         print("Model loaded")
+        
+def main():
+    model = SharedNet(input_size=105000, outputs_size=[('HLA_A', 5), ('HLA_B', 5), ('HLA_C', 5),
+                                                    ('HLA_DRB1', 5), ('HLA_DQA1', 5), ('HLA_DQB1', 5),
+                                                    ('HLA_DPA1', 5), ('HLA_DPB1', 5)])
+    summary(model, (1, 105000), device='cpu', batch_size=64)
+    
+if __name__ == "__main__":
+    main()
