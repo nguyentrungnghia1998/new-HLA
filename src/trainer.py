@@ -64,7 +64,7 @@ class Trainer:
                 targets = Variable(T.FloatTensor(np.array(targets).astype(np.float64)).to(self.device), requires_grad=True)
                 self.model.reset_grad()
                 output = self.model(inputs)
-                loss = self.model.loss(output, targets)
+                loss = self.model.loss(output, targets.detach())
                 loss.backward()
                 self.train_losses.append(loss.item())
                 self.model.step()
