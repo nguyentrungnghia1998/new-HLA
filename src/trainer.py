@@ -54,7 +54,7 @@ class Trainer:
     
     def train(self):
         self.model.to(self.device)
-        self.model._train()
+        self.model.train()
         trainset = self.train_loader
         for iter in range(self.epochs):
             train_batches = self.split_batch(trainset, self.batch_size, shuffle=True)
@@ -75,7 +75,8 @@ class Trainer:
                     self.save_train_losses()
                     self.model.save()
                     self.model.save_train_losses(self.train_losses)
-                    t.set_postfix(val_acc=self.test())
+                    returns = self.test()
+                    t.set_postfix(val_acc=returns)
                     self.model._train()
 
             
@@ -83,7 +84,7 @@ class Trainer:
         self.model.load_state_dict(T.load(path))
     
     def save_train_losses(self):
-        plt.plot(self.train_losses)
+        plt.plot(self.train_losses) 
         out_dir = 'output/train_losses'
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
@@ -94,16 +95,19 @@ class Trainer:
             print('Skipping test')
         self.model._eval()
         accuracies = {}
+        val_losses = {}
         for name, output_size in self.model.outputs_size:
             accuracies[name] = 0
+            val_losses[name] = 0
             
         with T.no_grad():
             t = tqdm(zip(self.test_loader['data'], self.test_loader['label']), desc="Testing")
             for _iter, (data, target) in enumerate(t):
                 output = self.model.predict(data)
-            presize = 0
-            for name, output_size in self.model.outputs_size:
-                if np.argmax(output[presize:presize + output_size]) \
-                    == np.argmax(target[presize:presize + output_size]):
-                    accuracies[name] +=1
-        return [100. * acc / len(self.test_loader['data']) for acc in accuracies.values()]
+                presize = 0
+                for name, output_size in self.model.outputs_size:
+                    if np.argmax(output[presize:presize + output_size]) \
+                        == np.argmax(target[presize:presize + output_size]):
+                        accuracies[name] +=1
+                    # val_losses[name] += self.model.loss(output[presize:presize + output_size], target[presize:presize + output_size]).item()
+        return [np.round(acc / len(self.test_loader['data']), 2) for acc in accuracies.values()]
