@@ -43,9 +43,9 @@ class SharedNet(nn.Module):
         conv1_kernel_size = config['HLA_Shared']["conv1_kernel_size"]
         conv2_kernel_size = config['HLA_Shared']["conv2_kernel_size"]
         fc_len = config['HLA_Shared']["fc_len"]
-        linear_input = (((input_size - conv1_kernel_size + 1) // 2) - conv2_kernel_size + 1) // 2
+        linear_input = (((input_size - conv1_kernel_size + 4) // 4) - conv2_kernel_size + 3) // 4
         self.relu = nn.ReLU().to(self.device)
-        self.pool = nn.MaxPool1d(2, stride=2).to(self.device)
+        self.pool = nn.MaxPool1d(2, stride=4).to(self.device)
         self.conv1 = nn.Conv1d(1, conv1_num_filter, kernel_size=conv1_kernel_size).to(self.device).to(self.device)
         self.conv2 = nn.Conv1d(conv1_num_filter, conv2_num_filter, kernel_size=conv2_kernel_size).to(self.device)
         self.bn1 = nn.BatchNorm1d(conv1_num_filter).to(self.device)
@@ -53,6 +53,7 @@ class SharedNet(nn.Module):
         self.fc = nn.Linear(conv2_num_filter * linear_input, fc_len).to(self.device)
         self.HLA_layers = [PrivatedNet(name, fc_len, output_size) 
                            for name, output_size in outputs_size]
+        self.fc_len = fc_len
         
     def forward(self, x):
         x = x.reshape(-1, 1, self.input_size)
@@ -136,10 +137,12 @@ class SharedNet(nn.Module):
         print("Model loaded")
         
 def main():
-    model = SharedNet(input_size=105000, outputs_size=[('HLA_A', 5), ('HLA_B', 5), ('HLA_C', 5),
-                                                    ('HLA_DRB1', 5), ('HLA_DQA1', 5), ('HLA_DQB1', 5),
-                                                    ('HLA_DPA1', 5), ('HLA_DPB1', 5)])
-    summary(model, (1, 105000), device='cpu', batch_size=64)
+    model = SharedNet(input_size=101506, outputs_size=[('HLA_A', 42), ('HLA_B', 69), ('HLA_C', 41),
+                                                    ('HLA_DRB1', 64), ('HLA_DQA1', 37), ('HLA_DQB1', 30),
+                                                    ('HLA_DPA1', 37), ('HLA_DPB1', 37)])
+    summary(model, (1, 101506), device='cpu', batch_size=1)
+    for _model in model.HLA_layers:
+        summary(_model, (256, ), device='cpu', batch_size=1)
     
 if __name__ == "__main__":
     main()
