@@ -43,9 +43,9 @@ class SharedNet(nn.Module):
         conv1_kernel_size = config['HLA_Shared']["conv1_kernel_size"]
         conv2_kernel_size = config['HLA_Shared']["conv2_kernel_size"]		# Kích thước kernel của 2 lớp tích chập
         fc_len = config['HLA_Shared']["fc_len"]
-        linear_input = (((input_size - conv1_kernel_size + 1) // 2) - conv2_kernel_size + 1) // 2		# Đầu ra lý thuyết
+        linear_input = (((input_size - conv1_kernel_size + 4) // 4) - conv2_kernel_size + 3) // 4
         self.relu = nn.ReLU().to(self.device)
-        self.pool = nn.MaxPool1d(2, stride=2).to(self.device)
+        self.pool = nn.MaxPool1d(2, stride=4).to(self.device)
         self.conv1 = nn.Conv1d(1, conv1_num_filter, kernel_size=conv1_kernel_size).to(self.device)		# 2 lớp tích chập
         self.conv2 = nn.Conv1d(conv1_num_filter, conv2_num_filter, kernel_size=conv2_kernel_size).to(self.device)
         self.bn1 = nn.BatchNorm1d(conv1_num_filter).to(self.device)
