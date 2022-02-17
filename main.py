@@ -1,6 +1,6 @@
 from src.data_helper import *
 from models.SharedNet import SharedNet
-import argparse
+import argparse		# Thư viện giúp tạo định nghĩa command line trong terminal
 
 from src.trainer import Trainer
 
@@ -11,19 +11,19 @@ def parse_args():
     parser.add_argument('--label-path', type=str, default='input/DGV4VN_1015.HISAT_result.csv')
     parser.add_argument('--model-name', type=str, default='model.pt')
     parser.add_argument('--output-path', type=str, default='output')
-    parser.add_argument('-l', '--loss', type=str, default='mse')
+    parser.add_argument('-l', '--loss', type=str, default='cross_entropy')
     parser.add_argument('-o', '--optimizer', type=str, default='adam')
-    parser.add_argument('-e', '--epochs', type=int, default=1000)
-    parser.add_argument('--lr', type=float, default=0.001)
+    parser.add_argument('-e', '--epochs', type=int, default=200)
+    parser.add_argument('--lr', type=float, default=0.005)
     parser.add_argument('-b', '--batch-size', type=int, default=64)
     parser.add_argument('-n', '--n-repeats', type=int, default=1)
-    parser.add_argument('-p', '--print-every', type=int, default=1)
-    parser.add_argument('-s', '--save-every', type=int, default=500)
+    parser.add_argument('-p', '--print-every', type=int, default=5)
+    parser.add_argument('-s', '--save-every', type=int, default=10)
     parser.add_argument('-d', '--save-dir', type=str, default='./trainned_models')
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('-m', '--transform', action='store_true', default=True)
     
-    args = parser.parse_args()
+    args = parser.parse_args() 
     return args
 
 
