@@ -21,6 +21,7 @@ def parse_args():
     parser.add_argument('-s', '--save-every', type=int, default=10)
     parser.add_argument('-d', '--save-dir', type=str, default='./trainned_models')
     parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument('--sample', type=int, default=1000)
     parser.add_argument('-m', '--transform', action='store_true', default=True)
     
     args = parser.parse_args() 
@@ -33,7 +34,7 @@ def main():
         ''' read cvf file and convert to csv format '''
         df = load_vcf_file(args.data_path, 
                              index_path=args.index_path, 
-                             nrows=500,
+                             nrows=args.sample,
                              saved=True)
     else: 
         df = pd.read_csv(args.data_path.replace('.vcf.gz', '.csv'), index_col=0)
@@ -84,7 +85,7 @@ def main():
         dataset['data'].append(data_row)
         dataset['label'].append(label)
     
-    # trainset, testset = split_dataset(dataset, 0.8, shuffle=True)
+    trainset, testset = split_dataset(dataset, 0.8, shuffle=True)
     
     input_size = len(dataset['data'][0])
     outputs_size = [['HLA_' + col, len(df_allele_labels[col].iloc[0])] for col in columns]
@@ -92,8 +93,8 @@ def main():
     
     trainer = Trainer(
         model=SharedNet(input_size, outputs_size),
-        train_loader=dataset,
-        test_loader=dataset,
+        train_loader=trainset,
+        test_loader=testset,
         loss=args.loss,
         optimizer=args.optimizer,
         epochs=args.epochs,
