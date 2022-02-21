@@ -42,27 +42,32 @@ class SharedNet(nn.Module):
         conv2_num_filter = config['HLA_Shared']["conv2_num_filter"]
         conv1_kernel_size = config['HLA_Shared']["conv1_kernel_size"]
         conv2_kernel_size = config['HLA_Shared']["conv2_kernel_size"]		# Kích thước kernel của 2 lớp tích chập
+        max_pool_size = config['HLA_Shared']["max_pool_size"]		# Kích thước lớp tích chập
         fc_len = config['HLA_Shared']["fc_len"]
-        linear_input = (((input_size - conv1_kernel_size + 4) // 4) - conv2_kernel_size + 3) // 4
+        self.p_dropout = config['HLA_Shared']["p_dropout"]
+        w_size = config['HLA_Shared']["w_size"]
+        linear_input = (((input_size - conv1_kernel_size) // w_size) // max_pool_size - conv2_kernel_size) // w_size // 2		# Số đầu vào của lớp fully connected
         self.relu = nn.ReLU().to(self.device)
-        self.pool = nn.MaxPool1d(2, stride=4).to(self.device)
-        self.conv1 = nn.Conv1d(1, conv1_num_filter, kernel_size=conv1_kernel_size).to(self.device)		# 2 lớp tích chập
-        self.conv2 = nn.Conv1d(conv1_num_filter, conv2_num_filter, kernel_size=conv2_kernel_size).to(self.device)
+        self.pool1 = nn.MaxPool1d(2, stride=max_pool_size).to(self.device)
+        self.pool2 = nn.MaxPool1d(2, stride=max_pool_size).to(self.device)
+        self.conv1 = nn.Conv1d(1, conv1_num_filter, kernel_size=conv1_kernel_size, stride=w_size).to(self.device)		# 2 lớp tích chập
+        self.conv2 = nn.Conv1d(conv1_num_filter, conv2_num_filter, kernel_size=conv2_kernel_size, stride=w_size).to(self.device)
         self.bn1 = nn.BatchNorm1d(conv1_num_filter).to(self.device)
         self.bn2 = nn.BatchNorm1d(conv2_num_filter).to(self.device)
-        self.fc = nn.Linear(conv2_num_filter * linear_input, fc_len).to(self.device)		# Lớp tuyến tính cuối cùng
+        self.fc = nn.Linear(conv2_num_filter * linear_input, fc_len).to(self.device)
+        self.fc_len = fc_len		# Lớp tuyến tính cuối cùng
+        self.fc_bn = nn.BatchNorm1d(fc_len).to(self.device)
         self.HLA_layers = [PrivatedNet(name, fc_len, output_size) 
                            for name, output_size in outputs_size]
-        self.fc_len = fc_len
         
     def forward(self, x):
         x = x.reshape(-1, 1, self.input_size)		# Chuyển đầu vào thành dạng 3D numpy array
         out = F.relu(self.bn1(self.conv1(x)))		
-        out = self.pool(out)
+        out = self.pool1(out)
         out = F.relu(self.bn2(self.conv2(out)))
-        out = self.pool(out)
+        out = self.pool2(out)
         out = out.view(out.size()[0], -1)		# Chuyển đầu ra về dạng vecto 2 chiều, flatten 2 chiều còn lại 
-        out = self.fc(out)
+        out = F.dropout(F.relu(self.fc_bn(self.fc(out))), p=self.p_dropout, training=self.training)
         outs = [HLA.forward(out) for HLA in self.HLA_layers]		# Tính các đầu ra ứng với mỗi mạng HLA con 
         out = torch.cat(outs, dim=1)
         return out
