@@ -46,7 +46,7 @@ class SharedNet(nn.Module):
         fc_len = config['HLA_Shared']["fc_len"]
         self.p_dropout = config['HLA_Shared']["p_dropout"]
         w_size = config['HLA_Shared']["w_size"]
-        linear_input = (((input_size - conv1_kernel_size) // w_size) // max_pool_size - conv2_kernel_size) // w_size // 2		# Số đầu vào của lớp fully connected
+        self.linear_input = ((((input_size - conv1_kernel_size) // w_size + 1) // max_pool_size - conv2_kernel_size) // w_size + 1) // 2		# Số đầu vào của lớp fully connected
         self.relu = nn.ReLU().to(self.device)
         self.pool1 = nn.MaxPool1d(2, stride=max_pool_size).to(self.device)
         self.pool2 = nn.MaxPool1d(2, stride=max_pool_size).to(self.device)
@@ -54,7 +54,7 @@ class SharedNet(nn.Module):
         self.conv2 = nn.Conv1d(conv1_num_filter, conv2_num_filter, kernel_size=conv2_kernel_size, stride=w_size).to(self.device)
         self.bn1 = nn.BatchNorm1d(conv1_num_filter).to(self.device)
         self.bn2 = nn.BatchNorm1d(conv2_num_filter).to(self.device)
-        self.fc = nn.Linear(conv2_num_filter * linear_input, fc_len).to(self.device)
+        self.fc = nn.Linear(conv2_num_filter * self.linear_input, fc_len).to(self.device)
         self.fc_len = fc_len		# Lớp tuyến tính cuối cùng
         self.fc_bn = nn.BatchNorm1d(fc_len).to(self.device)
         self.HLA_layers = [PrivatedNet(name, fc_len, output_size) 
