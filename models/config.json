@@ -6,8 +6,8 @@
         "conv2_kernel_size": 64, 
         "w_size": 16,
         "max_pool_size": 2,
-        "p_dropout": 0.7,
-        "fc_len": 256
+        "p_dropout": 0.0,
+        "fc_len": 512
     },
 	"HLA_A": {
         "fc1_len": 256,
