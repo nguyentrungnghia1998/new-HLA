@@ -31,16 +31,20 @@ def parse_args():
 def main():
     args = parse_args()
     if args.transform:
-        ''' read cvf file and convert to csv format '''
+        ''' read vcf file and convert to csv format '''
         df = load_vcf_file(args.data_path, 
                              index_path=args.index_path, 
                              nrows=args.sample,
                              saved=True)
     else: 
+        ''' load csv file '''
         df = pd.read_csv(args.data_path.replace('.vcf.gz', '.csv'), index_col=0)
         
     label_df_file_path = args.label_path
     label_df = pd.read_csv(label_df_file_path, index_col=0)
+    label_df = label_df.set_index(np.array(['_'.join(x.split('_')[:4]) 
+                                            for x in label_df.index.to_numpy()]))
+    label_df.sort_index(inplace=True)
     columns = label_df.columns
     
     one_hot_encoder = {}
@@ -71,6 +75,19 @@ def main():
     df_allele_labels = pd.concat([df_allele_labels_1, df_allele_labels_2], axis=0)
     columns = df_allele_labels.columns
     
+    dropped_label_indices = []
+    dropped_data_indices = []
+    # Drop rows in df_allele_labels that not in df
+    for i in range(len(df_allele_labels)):
+        if df_allele_labels.index[i] not in df.index:
+            dropped_label_indices.append(i)
+
+    for i in range(len(df)):
+        if df.index[i] not in df_allele_labels.index:
+            dropped_data_indices.append(i)
+
+    df_allele_labels.drop(df_allele_labels.index[dropped_label_indices], inplace=True)
+    df.drop(df.index[dropped_data_indices], inplace=True)
     ''' concat of all columns is label_df_one_hot '''
     df_allele_labels['label'] = df_allele_labels.apply(
         lambda x: np.concatenate(x.values), axis=1)
