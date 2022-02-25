@@ -105,8 +105,11 @@ class Trainer:
                 output = self.model.predict(data)
                 presize = 0
                 for name, output_size in self.model.outputs_size:
-                    if np.argmax(output[presize:presize + output_size]) \
-                        == np.argmax(target[presize:presize + output_size]):		# Kiểm tra xem output có giống với target 
-                        accuracies[name] +=1
+                    outs = output[presize:presize + output_size].argsort()[-2:][::-1]
+                    targets = target[presize:presize + output_size].argsort()[-2:][::-1]
+                    presize += output_size
+                    if (outs[0] == targets[0] and outs[1] == targets[1]) \
+                        or (outs[0] == targets[1] and outs[1] == targets[0]):
+                        accuracies[name] += 1
                     # val_losses[name] += self.model.loss(output[presize:presize + output_size], target[presize:presize + output_size]).item()
         return [np.round(acc / len(self.test_loader['data']), 2) for acc in accuracies.values()]
