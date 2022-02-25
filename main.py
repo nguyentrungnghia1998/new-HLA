@@ -18,7 +18,7 @@ def parse_args():
     parser.add_argument('-b', '--batch-size', type=int, default=64)
     parser.add_argument('-n', '--n-repeats', type=int, default=1)
     parser.add_argument('-p', '--print-every', type=int, default=5)
-    parser.add_argument('-s', '--save-every', type=int, default=10)
+    parser.add_argument('-s', '--save-every', type=int, default=100)
     parser.add_argument('-d', '--save-dir', type=str, default='./trainned_models')
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('--sample', type=int, default=10009)
@@ -100,6 +100,10 @@ def main():
         data_row = np.concatenate(([df.iloc[i].values], [df.iloc[i + dataset_length].values]))
         label = np.sum(np.concatenate(([df_allele_labels['label'].iloc[i]], 
                                        [df_allele_labels['label'].iloc[i + dataset_length]])), axis=0)
+        dataset['data'].append(data_row)
+        dataset['label'].append(label)
+        # swap two rows 0, 1
+        data_row = np.array([data_row[1], data_row[0]])
         dataset['data'].append(data_row)
         dataset['label'].append(label)
     
