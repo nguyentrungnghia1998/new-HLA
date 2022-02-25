@@ -1,5 +1,5 @@
 from src.data_helper import *
-from models.SharedNet import SharedNet
+from models.SharedNet2D import SharedNet2D
 import argparse		# Thư viện giúp tạo định nghĩa command line trong terminal
 
 from src.trainer import Trainer
@@ -11,7 +11,7 @@ def parse_args():
     parser.add_argument('--label-path', type=str, default='input/DGV4VN_1015.HISAT_result.csv')
     parser.add_argument('--model-name', type=str, default='model.pt')
     parser.add_argument('--output-path', type=str, default='output')
-    parser.add_argument('-l', '--loss', type=str, default='cross_entropy')
+    parser.add_argument('-l', '--loss', type=str, default='bce')
     parser.add_argument('-o', '--optimizer', type=str, default='adam')
     parser.add_argument('-e', '--epochs', type=int, default=200)
     parser.add_argument('--lr', type=float, default=0.005)
@@ -21,8 +21,8 @@ def parse_args():
     parser.add_argument('-s', '--save-every', type=int, default=10)
     parser.add_argument('-d', '--save-dir', type=str, default='./trainned_models')
     parser.add_argument('-v', '--verbose', action='store_true')
-    parser.add_argument('--sample', type=int, default=1000)
-    parser.add_argument('-m', '--transform', action='store_true', default=True)
+    parser.add_argument('--sample', type=int, default=10009)
+    parser.add_argument('-m', '--transform', action='store_true')
     
     args = parser.parse_args() 
     return args
@@ -46,7 +46,6 @@ def main():
                                             for x in label_df.index.to_numpy()]))
     label_df.sort_index(inplace=True)
     columns = label_df.columns
-    
     one_hot_encoder = {}
     
     for i in range(0, len(columns), 2):
@@ -96,20 +95,22 @@ def main():
         'data': [],
         'label': []
     }
-    for i in range(len(df)):
-        data_row = df.iloc[i].values
-        label = df_allele_labels['label'].iloc[i]
+    dataset_length = len(df) // 2
+    for i in range(dataset_length):
+        data_row = np.concatenate(([df.iloc[i].values], [df.iloc[i + dataset_length].values]))
+        label = np.sum(np.concatenate(([df_allele_labels['label'].iloc[i]], 
+                                       [df_allele_labels['label'].iloc[i + dataset_length]])), axis=0)
         dataset['data'].append(data_row)
         dataset['label'].append(label)
     
     trainset, testset = split_dataset(dataset, 0.8, shuffle=True)
     
-    input_size = len(dataset['data'][0])
+    input_size = (2, len(dataset['data'][0][0]))
     outputs_size = [['HLA_' + col, len(df_allele_labels[col].iloc[0])] for col in columns]
     print('input_size: {}, output_size: {}'.format(input_size, outputs_size))
     
     trainer = Trainer(
-        model=SharedNet(input_size, outputs_size),
+        model=SharedNet2D(input_size, outputs_size),
         train_loader=trainset,
         test_loader=testset,
         loss=args.loss,

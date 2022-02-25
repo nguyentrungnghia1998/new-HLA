@@ -11,7 +11,7 @@ import numpy as np
 from torch import optim
 from torchsummary.torchsummary import summary		# Tóm lại một mô hình dưới dạng 1 sơ đồ khối có đầu ra mỗi lớp
 
-config = json.load(open('models/config.json'))
+config = json.load(open('models/Model_1D.json'))
 
 class PrivatedNet(nn.Module):
     def __init__(self, name, input_size, output_size):
@@ -31,9 +31,9 @@ class PrivatedNet(nn.Module):
         return torch.softmax(out, dim=1)
         
 
-class SharedNet(nn.Module):
+class SharedNet1D(nn.Module):
     def __init__(self, input_size, outputs_size):
-        super(SharedNet, self).__init__()
+        super(SharedNet1D, self).__init__()
         self.name = 'SharedNet'
         self.input_size = input_size		# Số đầu vào của mạng SharedNet chứa tất cả các loại HLA
         self.outputs_size = outputs_size
@@ -142,7 +142,7 @@ class SharedNet(nn.Module):
         print("Model loaded")
         
 def main():
-    model = SharedNet(input_size=101506, outputs_size=[('HLA_A', 42), ('HLA_B', 69), ('HLA_C', 41),
+    model = SharedNet1D(input_size=101506, outputs_size=[('HLA_A', 42), ('HLA_B', 69), ('HLA_C', 41),
                                                     ('HLA_DRB1', 64), ('HLA_DQA1', 37), ('HLA_DQB1', 30),
                                                     ('HLA_DPA1', 37), ('HLA_DPB1', 37)])
     summary(model, (1, 101506), device='cpu', batch_size=1)
