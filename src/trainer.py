@@ -108,8 +108,8 @@ class Trainer:
                     outs = output[presize:presize + output_size].argsort()[-2:][::-1]
                     targets = target[presize:presize + output_size].argsort()[-2:][::-1]
                     presize += output_size
-                    if (outs[0] == targets[0] and outs[1] == targets[1]) \
-                        or (outs[0] == targets[1] and outs[1] == targets[0]):
+                    if (outs[0] == targets[0] or outs[1] == targets[1]) \
+                        or (outs[0] == targets[1] or outs[1] == targets[0]):
                         accuracies[name] += 1
                     # val_losses[name] += self.model.loss(output[presize:presize + output_size], target[presize:presize + output_size]).item()
         return [np.round(acc / len(self.test_loader['data']), 2) for acc in accuracies.values()]
