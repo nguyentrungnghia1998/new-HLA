@@ -8,7 +8,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data-path', type=str, default='input/test_subsample.vcf.gz')
     parser.add_argument('--index-path', type=str, default='input/test.list')
-    parser.add_argument('--label-path', type=str, default='input/DGV4VN_1015.HISAT_result.csv')
+    parser.add_argument('--label-path', type=str, default='input/DGV4VN_1006.Kourami_result.nonsort.csv')
     parser.add_argument('--model-name', type=str, default='model.pt')
     parser.add_argument('--output-path', type=str, default='output')
     parser.add_argument('-l', '--loss', type=str, default='bce')
@@ -18,7 +18,7 @@ def parse_args():
     parser.add_argument('-b', '--batch-size', type=int, default=64)
     parser.add_argument('-n', '--n-repeats', type=int, default=1)
     parser.add_argument('-p', '--print-every', type=int, default=5)
-    parser.add_argument('-s', '--save-every', type=int, default=100)
+    parser.add_argument('-s', '--save-every', type=int, default=10)
     parser.add_argument('-d', '--save-dir', type=str, default='./trainned_models')
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('--sample', type=int, default=10009)
@@ -45,9 +45,12 @@ def main():
     label_df = label_df.set_index(np.array(['_'.join(x.split('_')[:4]) 
                                             for x in label_df.index.to_numpy()]))
     label_df.sort_index(inplace=True)
-    columns = label_df.columns
+    # columns = label_df.columns
+    columns = ['A_1', 'A_2', 'B_1', 'B_2', 'C_1', 'C_2', 'DQA1_1', 'DQA1_2', 'DQB1_1',
+       'DQB1_2', 'DRB1_1', 'DRB1_2', 'DPB1_1', 'DPB1_2']
     one_hot_encoder = {}
-    
+    # fill nan in label_df with '0'
+    label_df = label_df.fillna('0')
     for i in range(0, len(columns), 2):
         col_1 = label_df[columns[i]].values
         col_2 = label_df[columns[i+1]].values
