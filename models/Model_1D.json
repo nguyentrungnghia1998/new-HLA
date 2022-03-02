@@ -1,0 +1,44 @@
+{
+    "HLA_Shared":{
+        "conv1_num_filter": 64, 
+        "conv2_num_filter": 256, 
+        "conv1_kernel_size": 64, 
+        "conv2_kernel_size": 64, 
+        "w_size": 16,
+        "max_pool_size": 2,
+        "p_dropout": 0.0,
+        "fc_len": 512
+    },
+	"HLA_A": {
+        "fc1_len": 256,
+        "fc2_len": 128
+    },
+    "HLA_B": {
+        "fc1_len": 256,
+        "fc2_len": 128
+    },
+    "HLA_C": {
+        "fc1_len": 256,
+        "fc2_len": 128
+    },
+    "HLA_DRB1": {
+        "fc1_len": 256,
+        "fc2_len": 128
+    },
+    "HLA_DQA1": {
+        "fc1_len": 256,
+        "fc2_len": 128
+    },
+    "HLA_DQB1": {
+        "fc1_len": 256,
+        "fc2_len": 128
+    },
+    "HLA_DPA1": {
+        "fc1_len": 256,
+        "fc2_len": 128
+    },
+    "HLA_DPB1":{
+        "fc1_len": 256,
+        "fc2_len": 128
+    }
+}
