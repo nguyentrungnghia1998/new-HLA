@@ -1,3 +1,4 @@
+import pickle
 from cyvcf2 import VCF		# Thư viện để làm việc với file VCF
 import pandas as pd
 import numpy as np
@@ -75,3 +76,19 @@ def split_dataset(dataset, split_ratio, shuffle=True):
         'label': dataset['label'][split_point:]
     }
     return train_dataset, test_dataset
+
+def save_to_bin(dataset, path):
+    '''
+    dataset: dict
+    path: path to save file
+    '''
+    with open(path, 'wb') as f:
+        pickle.dump(dataset, f)
+
+def load_from_bin(path):
+    '''
+    path: path to load file
+    return: dict
+    '''
+    with open(path, 'rb') as f:
+        return pickle.load(f)
