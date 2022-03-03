@@ -76,6 +76,7 @@ class Trainer:
                     self.model.save_train_losses(self.train_losses)
                     returns = self.test()		# Trả về kết quả accuracy từng batch của tập test
                     t.set_postfix(val_acc=returns)
+                    self.valid_acc = returns
                     self.model._train()
 
             
