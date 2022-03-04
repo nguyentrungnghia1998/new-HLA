@@ -9,7 +9,7 @@ from src.data_helper import shuffle_data
 
 class Trainer:
     def __init__(self, model, loss, optimizer, train_loader=None, test_loader=None,
-                 device=T.device("cpu"), lr=0.0005, epochs=200, batch_size=64,
+                 device=T.device("cuda" if T.cuda.is_available() else "cpu"), lr=0.0005, epochs=200, batch_size=64,
                  n_repeats = 2, print_every=1, save_every=500, 
                  save_dir="./trainned_models",
                  save_name="model.pt", verbose=True):

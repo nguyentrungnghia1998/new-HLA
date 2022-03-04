@@ -91,22 +91,40 @@ class SharedNet2D(nn.Module):
         return output.cpu().data.numpy().flatten()
  
     def set_loss_function(self, loss):
-        if loss == "mse":
-            self.loss = nn.MSELoss()		# Hàm loss là tổng bình phương sai lệch
-        elif loss == "cross_entropy":
-            self.loss = nn.CrossEntropyLoss()
-        elif loss == "bce":
-            self.loss = nn.BCELoss()		# Hàm loss là binary cross entropy, với đầu ra 2 lớp
-        elif loss == "bce_logits":
-            self.loss = nn.BCEWithLogitsLoss()		# Hàm BCE logit sau đầu ra dự báo có thêm sigmoid, giống BCE
-        elif loss == "l1":
-            self.loss = nn.L1Loss()
-        elif loss == "smooth_l1":
-            self.loss = nn.SmoothL1Loss()		# Hàm L1 loss nhưng có đỉnh được làm trơn, khả vi với mọi điểm
-        elif loss == "soft_margin":
-            self.loss = nn.SoftMarginLoss()		# Hàm tối ưu logistic loss 2 lớp của mục tiêu và đầu ra dự báo
+        if self.device=="cpu":
+            if loss == "mse":
+                self.loss = nn.MSELoss()		# Hàm loss là tổng bình phương sai lệch
+            elif loss == "cross_entropy":
+                self.loss = nn.CrossEntropyLoss()
+            elif loss == "bce":
+                self.loss = nn.BCELoss()		# Hàm loss là binary cross entropy, với đầu ra 2 lớp
+            elif loss == "bce_logits":
+                self.loss = nn.BCEWithLogitsLoss()		# Hàm BCE logit sau đầu ra dự báo có thêm sigmoid, giống BCE
+            elif loss == "l1":
+                self.loss = nn.L1Loss()
+            elif loss == "smooth_l1":
+                self.loss = nn.SmoothL1Loss()		# Hàm L1 loss nhưng có đỉnh được làm trơn, khả vi với mọi điểm
+            elif loss == "soft_margin":
+                self.loss = nn.SoftMarginLoss()		# Hàm tối ưu logistic loss 2 lớp của mục tiêu và đầu ra dự báo
+            else:
+                raise ValueError("Loss function not found")
         else:
-            raise ValueError("Loss function not found")
+            if loss == "mse":
+                self.loss = nn.MSELoss().cuda()		# Hàm loss là tổng bình phương sai lệch
+            elif loss == "cross_entropy":
+                self.loss = nn.CrossEntropyLoss().cuda()
+            elif loss == "bce":
+                self.loss = nn.BCELoss().cuda()		# Hàm loss là binary cross entropy, với đầu ra 2 lớp
+            elif loss == "bce_logits":
+                self.loss = nn.BCEWithLogitsLoss().cuda()		# Hàm BCE logit sau đầu ra dự báo có thêm sigmoid, giống BCE
+            elif loss == "l1":
+                self.loss = nn.L1Loss().cuda()
+            elif loss == "smooth_l1":
+                self.loss = nn.SmoothL1Loss().cuda()		# Hàm L1 loss nhưng có đỉnh được làm trơn, khả vi với mọi điểm
+            elif loss == "soft_margin":
+                self.loss = nn.SoftMarginLoss().cuda()		# Hàm tối ưu logistic loss 2 lớp của mục tiêu và đầu ra dự báo
+            else:
+                raise ValueError("Loss function not found")
         
     def set_optimizer(self, optimizer, lr):
         if optimizer == "sgd":
