@@ -1,9 +1,11 @@
 from src.data_helper import *
 from models.SharedNet2D import SharedNet2D
 import argparse		# Thư viện giúp tạo định nghĩa command line trong terminal
-
+import os
 from sklearn.model_selection import StratifiedKFold
-
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('AGG')
 from src.trainer import Trainer
 
 def parse_args():
@@ -13,8 +15,8 @@ def parse_args():
     parser.add_argument('--output-path', type=str, default='output')
     parser.add_argument('-l', '--loss', type=str, default='bce')
     parser.add_argument('-o', '--optimizer', type=str, default='adam')
-    parser.add_argument('-k', '--k-fold', type=int, default=10)
-    parser.add_argument('-e', '--epochs', type=int, default=200)
+    parser.add_argument('-k', '--k-fold', type=int, default=2)
+    parser.add_argument('-e', '--epochs', type=int, default=2)
     parser.add_argument('--lr', type=float, default=0.005)
     parser.add_argument('-b', '--batch-size', type=int, default=64)
     parser.add_argument('-n', '--n-repeats', type=int, default=1)
@@ -29,7 +31,17 @@ def parse_args():
 def save_acc(accuracy, name_acc):
     with open(str(parse_args().output_path) + "/kfold_acc.txt", 'a') as f:
         f.writelines(name_acc + str(accuracy)+"\n")
-
+def plot_box_plot(accuracy_folds):
+    mean = np.mean(accuracy_folds, axis = 0)
+    std = np.std(accuracy_folds,axis=0)
+    name=['HLA_A','HLA_B','HLA_C','HLA_DQA1','HLA_DQB1','HLA_DRB1','HLA_DPB1']
+    fig = plt.figure()
+    plt.errorbar(name,mean,std,ls='none')
+    plt.show()
+    out_dir = 'output/evaluation'
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    fig.savefig(out_dir+"/Evaluation_Metric.png")
 def main():
     args = parse_args()
     ''' load csv file '''
@@ -82,7 +94,9 @@ def main():
         fold +=1
 
     print("\nAverage accuracy:  ", np.mean(accuracy_folds, axis=0))
+    print("\nStandart variation: ",np.std(accuracy_folds, axis=0))
     save_acc(np.mean(accuracy_folds, axis = 0), "\nAverage accuracy:  ")
-
+    save_acc(np.std(accuracy_folds, axis = 0), "\nStandart variation:  ")
+    plot_box_plot(accuracy_folds)
 if __name__ == "__main__":
     main()
