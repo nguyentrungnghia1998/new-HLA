@@ -103,7 +103,7 @@ class Trainer:
         out_dir = 'output/train_valid_losses'
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
-        plt.savefig("{}/{}_{}".format(out_dir, self.model.name, 'train_valid_losses_relu.png'))
+        plt.savefig("{}/{}_{}".format(out_dir, self.model.name, 'train_valid_losses_erlu.png'))
     
     def test(self):
         if len(self.test_loader['data']) == 0:
@@ -123,10 +123,10 @@ class Trainer:
                 for name, output_size in self.model.outputs_size:
                     outs = output[presize:presize + output_size].argsort()[-2:][::-1]
                     targets = target[presize:presize + output_size].argsort()[-2:][::-1]
-                    presize += output_size
                     if (outs[0] == targets[0]) \
                         or (outs[0] == targets[1]):
                         accuracies[name] += 1
                     val_losses[name] += self.model.loss(T.FloatTensor(output[presize:presize + output_size]), T.FloatTensor(target[presize:presize + output_size])).item()
+                    presize += output_size
         return [np.round(acc / len(self.test_loader['data']), 2) for acc in accuracies.values()], np.mean(list(val_losses.values()))/(_iter+1)
 
