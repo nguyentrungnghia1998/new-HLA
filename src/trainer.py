@@ -1,4 +1,6 @@
-import os		# Thư viện làm việc với đường dẫn và file trong python
+import os
+import matplotlib		# Thư viện làm việc với đường dẫn và file trong python
+matplotlib.use('AGG')
 import torch as T
 import numpy as np
 from torch.autograd import Variable		# Hàm khai báo các biến tensor và có thể thay đổi gradient của nó
@@ -10,7 +12,7 @@ from src.data_helper import shuffle_data
 class Trainer:
     def __init__(self, model, loss, optimizer, train_loader=None, test_loader=None, fold=1,
                  device=T.device("cuda" if T.cuda.is_available() else "cpu"), lr=0.0005, epochs=200, batch_size=64,
-                 n_repeats = 2, print_every=1, save_every=500, 
+                 n_repeats = 2, print_every=1, save_every=500,
                  save_dir="./trainned_models",
                  save_name="model.pt", verbose=True):
         self.model = model
@@ -83,19 +85,20 @@ class Trainer:
             print('Train_loss: ',losses)
             self.train_losses.append(losses)
             self.valid_losses.append(valid_loss)
-            self.save_train_valid_losses()
+            self.save_train_valid_losses(self.fold)
 
     def load_model_from_path(self, path):
         self.model.load_state_dict(T.load(path))
     
-    def save_train_losses(self):
+    def save_train_losses(self,i):
         plt.plot(self.train_losses) 
         out_dir = 'output/train_losses'
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
-        plt.savefig("{}/{}_{}".format(out_dir, self.model.name, 'train_losses.png'))
+        plt.savefig("{}/{}_{}".format(out_dir, self.model.name, 'train_losses_fold_'+str(i)+'.png'))
     
-    def save_train_valid_losses(self):
+    def save_train_valid_losses(self,i):
+        fig=plt.figure()
         plt.plot(self.train_losses,"-b",  label="train_losses") 
         plt.plot(self.valid_losses,"-r", label="valid_losses") 
         plt.legend(loc="upper right")
@@ -103,7 +106,7 @@ class Trainer:
         out_dir = 'output/train_valid_losses'
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
-        plt.savefig("{}/{}_{}".format(out_dir, self.model.name, 'train_valid_losses_erlu.png'))
+        fig.savefig("{}/{}_{}".format(out_dir, self.model.name, 'train_valid_losses_fold_'+str(i)+'.png'))
     
     def test(self):
         if len(self.test_loader['data']) == 0:

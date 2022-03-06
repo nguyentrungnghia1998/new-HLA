@@ -63,6 +63,7 @@ def main():
             test_loader=valset_kfold,
             loss=args.loss,
             optimizer=args.optimizer,
+            fold=fold,
             epochs=args.epochs,
             lr=args.lr,
             batch_size=args.batch_size,
