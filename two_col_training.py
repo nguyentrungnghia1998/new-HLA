@@ -29,7 +29,7 @@ def parse_args():
     return args
 
 def save_acc(accuracy, name_acc):
-    with open(str(parse_args().output_path) + "/kfold_acc.txt", 'a') as f:
+    with open(str(parse_args().output_path) + "/kfold_acc_model_2D.txt", 'a') as f:
         f.writelines(name_acc + str(accuracy)+"\n")
 def plot_box_plot(accuracy_folds):
     mean = np.mean(accuracy_folds, axis = 0)
@@ -47,6 +47,11 @@ def main():
     ''' load csv file '''
     dataset = load_from_bin(args.data_path.replace('.vcf.gz', '.bin'))
     
+    if dataset['type'] != "Model_2D":
+        print("Preprocessing data: Model_2D")
+        os.system("python preprocess_data.py")
+        dataset = load_from_bin(args.data_path.replace('.vcf.gz', '.bin'))
+
     trainset, testset = split_dataset(dataset, 0.8, shuffle=True)
     
     print('input_size: {}, output_size: {}'.format(dataset['input-size'], dataset['outputs-size']))
