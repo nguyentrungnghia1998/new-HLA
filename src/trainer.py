@@ -36,6 +36,7 @@ class Trainer:
         self.test_losses = []		# Tính loss của các tập train, test, validation mỗi epoch 
         self.train_acc = []
         self.valid_acc = []
+        self.valid_accuracy_epoch=[]
         self.test_acc = []
         
     def split_batch(self, dataset, batch_size=None, shuffle=False):
@@ -85,7 +86,9 @@ class Trainer:
             print('Train_loss: ',losses)
             self.train_losses.append(losses)
             self.valid_losses.append(valid_loss)
+            self.valid_accuracy_epoch.append(self.valid_acc)
             self.save_train_valid_losses(self.fold)
+            self.save_valid_acc(self.fold)
 
     def load_model_from_path(self, path):
         self.model.load_state_dict(T.load(path))
@@ -107,6 +110,19 @@ class Trainer:
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
         fig.savefig("{}/{}_{}".format(out_dir, self.model.name, 'train_valid_losses_fold_'+str(i)+'.png'))
+    
+    def save_valid_acc(self,i):
+        fig=plt.figure()
+        name=['HLA_A','HLA_B','HLA_C','HLA_DQA1','HLA_DQB1','HLA_DRB1','HLA_DPB1']
+        np_accu=np.array(self.valid_accuracy_epoch).T
+        for j in range(len(name)):
+            plt.plot(np_accu[j],label=name[j])
+        plt.legend(loc="upper right")
+        plt.show()
+        out_dir = 'output/train_valid_acc'
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+        fig.savefig("{}/{}_{}".format(out_dir, self.model.name, 'train_valid_acc_fold_'+str(i)+'.png'))
     
     def test(self):
         if len(self.test_loader['data']) == 0:
