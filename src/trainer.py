@@ -1,4 +1,6 @@
-import os		# Thư viện làm việc với đường dẫn và file trong python
+import os
+import matplotlib		# Thư viện làm việc với đường dẫn và file trong python
+matplotlib.use('AGG')
 import torch as T
 import numpy as np
 from torch.autograd import Variable		# Hàm khai báo các biến tensor và có thể thay đổi gradient của nó
@@ -8,9 +10,9 @@ from tqdm import tqdm
 from src.data_helper import shuffle_data
 
 class Trainer:
-    def __init__(self, model, loss, optimizer, train_loader=None, test_loader=None,
+    def __init__(self, model, loss, optimizer, train_loader=None, test_loader=None, fold=1,
                  device=T.device("cuda" if T.cuda.is_available() else "cpu"), lr=0.0005, epochs=200, batch_size=64,
-                 n_repeats = 2, print_every=1, save_every=500, 
+                 n_repeats = 2, print_every=1, save_every=500,
                  save_dir="./trainned_models",
                  save_name="model.pt", verbose=True):
         self.model = model
@@ -18,6 +20,7 @@ class Trainer:
         self.model.set_optimizer(optimizer, lr)		# Khai báo hàm loss, model, learning rate và thuật toán tối ưu
         self.train_loader = train_loader
         self.test_loader = test_loader		# Khai báo biến load của 2 tập train và test
+        self.fold = fold 
         self.device = device
         self.epochs = epochs
         self.batch_size = batch_size
@@ -33,6 +36,7 @@ class Trainer:
         self.test_losses = []		# Tính loss của các tập train, test, validation mỗi epoch 
         self.train_acc = []
         self.valid_acc = []
+        self.valid_accuracy_epoch=[]
         self.test_acc = []
         
     def split_batch(self, dataset, batch_size=None, shuffle=False):
@@ -57,7 +61,8 @@ class Trainer:
         trainset = self.train_loader
         for iter in range(self.epochs):
             train_batches = self.split_batch(trainset, self.batch_size, shuffle=True)
-            t = tqdm(train_batches, desc="Iter {}".format(iter))		# Khai báo 1 tiến trình tqdm cho từng batch 
+            t = tqdm(train_batches, desc="Epochs {}".format(iter))		# Khai báo 1 tiến trình tqdm cho từng batch 
+            losses = 0
             for batch_idx, (data, targets) in enumerate(t):		# Quét vòng lặp đến tất cả dữ liệu trong batch hiện ta
                 inputs = Variable(T.FloatTensor(np.array(data).astype(np.float64)).to(self.device), requires_grad=True)
                 targets = Variable(T.FloatTensor(np.array(targets).astype(np.float64)).to(self.device), requires_grad=True)
@@ -65,30 +70,59 @@ class Trainer:
                 output = self.model(inputs)
                 loss = self.model.loss(output, targets.detach())		# Tính hàm loss giữa đầu ra output và targets
                 loss.backward()
-                self.train_losses.append(loss.item())
                 self.model.step()		# Cập nhật tham số mạng nơ ron ở cuối mô hình 
-                
+                losses+=loss.item()
                 t.set_postfix(loss=loss.item())		# Đặt hiển thị loss ở cuối thanh tiến trình n 
 
                 if batch_idx % self.save_every == 0 and batch_idx != 0 or batch_idx == len(train_batches) - 1:
-                    self.save_train_losses()
                     self.model.save()
                     self.model.save_train_losses(self.train_losses)
-                    returns = self.test()		# Trả về kết quả accuracy từng batch của tập test
-                    t.set_postfix(val_acc=returns)
-                    self.valid_acc = returns
+                    self.valid_acc, valid_loss = self.test()		# Trả về kết quả accuracy từng batch của tập test
+                    t.set_postfix(val_acc=self.valid_acc)
                     self.model._train()
 
-            
+            losses = losses/len(train_batches)
+            print("\nValid_loss: ", valid_loss)
+            print('Train_loss: ',losses)
+            self.train_losses.append(losses)
+            self.valid_losses.append(valid_loss)
+            self.valid_accuracy_epoch.append(self.valid_acc)
+            self.save_train_valid_losses(self.fold)
+            self.save_valid_acc(self.fold)
+
     def load_model_from_path(self, path):
         self.model.load_state_dict(T.load(path))
     
-    def save_train_losses(self):
+    def save_train_losses(self,i):
         plt.plot(self.train_losses) 
         out_dir = 'output/train_losses'
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
-        plt.savefig("{}/{}_{}".format(out_dir, self.model.name, 'train_losses.png'))
+        plt.savefig("{}/{}_{}".format(out_dir, self.model.name, 'train_losses_fold_'+str(i)+'.png'))
+    
+    def save_train_valid_losses(self,i):
+        fig=plt.figure()
+        plt.plot(self.train_losses,"-b",  label="train_losses") 
+        plt.plot(self.valid_losses,"-r", label="valid_losses") 
+        plt.legend(loc="upper right")
+        plt.show()
+        out_dir = 'output/train_valid_losses'
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+        fig.savefig("{}/{}_{}".format(out_dir, self.model.name, 'train_valid_losses_fold_'+str(i)+'.png'))
+    
+    def save_valid_acc(self,i):
+        fig=plt.figure()
+        name=['HLA_A','HLA_B','HLA_C','HLA_DQA1','HLA_DQB1','HLA_DRB1','HLA_DPB1']
+        np_accu=np.array(self.valid_accuracy_epoch).T
+        for j in range(len(name)):
+            plt.plot(np_accu[j],label=name[j])
+        plt.legend(loc="upper right")
+        plt.show()
+        out_dir = 'output/train_valid_acc'
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+        fig.savefig("{}/{}_{}".format(out_dir, self.model.name, 'train_valid_acc_fold_'+str(i)+'.png'))
     
     def test(self):
         if len(self.test_loader['data']) == 0:
@@ -101,16 +135,17 @@ class Trainer:
             val_losses[name] = 0
             
         with T.no_grad():		# Tắt gradient các tensor trong khối lệnh phía dưới 
-            t = tqdm(zip(self.test_loader['data'], self.test_loader['label']), desc="Testing")
-            for _iter, (data, target) in enumerate(t):		# Lấy số vòng lặp, data và target lần lượt trong tqdm
+            # t = tqdm(zip(self.test_loader['data'], self.test_loader['label']), desc="Testing")
+            for _iter, (data, target) in enumerate(zip(self.test_loader['data'], self.test_loader['label'])):		# Lấy số vòng lặp, data và target lần lượt trong tqdm
                 output = self.model.predict(data)
                 presize = 0
                 for name, output_size in self.model.outputs_size:
                     outs = output[presize:presize + output_size].argsort()[-2:][::-1]
                     targets = target[presize:presize + output_size].argsort()[-2:][::-1]
-                    presize += output_size
                     if (outs[0] == targets[0]) \
                         or (outs[0] == targets[1]):
                         accuracies[name] += 1
-                    # val_losses[name] += self.model.loss(output[presize:presize + output_size], target[presize:presize + output_size]).item()
-        return [np.round(acc / len(self.test_loader['data']), 2) for acc in accuracies.values()]
+                    val_losses[name] += self.model.loss(T.FloatTensor(output[presize:presize + output_size]), T.FloatTensor(target[presize:presize + output_size])).item()
+                    presize += output_size
+        return [np.round(acc / len(self.test_loader['data']), 2) for acc in accuracies.values()], np.mean(list(val_losses.values()))/(_iter+1)
+
