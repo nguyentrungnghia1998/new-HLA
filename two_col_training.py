@@ -47,10 +47,10 @@ def main():
     ''' load csv file '''
     dataset = load_from_bin(args.data_path.replace('.vcf.gz', '.bin'))
     
-    if dataset['type'] != "Model_2D":
-        print("Preprocessing data: Model_2D")
-        os.system("python preprocess_data.py")
-        dataset = load_from_bin(args.data_path.replace('.vcf.gz', '.bin'))
+    # if dataset['type'] != "Model_2D":
+    #    print("Preprocessing data: Model_2D")
+    #    os.system("python preprocess_data.py")
+    #    dataset = load_from_bin(args.data_path.replace('.vcf.gz', '.bin'))
 
     trainset, testset = split_dataset(dataset, 0.8, shuffle=True)
     
