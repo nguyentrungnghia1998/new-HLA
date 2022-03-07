@@ -142,8 +142,7 @@ class Trainer:
                 for name, output_size in self.model.outputs_size:
                     outs = output[presize:presize + output_size].argsort()[-2:][::-1]
                     targets = target[presize:presize + output_size].argsort()[-2:][::-1]
-                    if (outs[0] == targets[0]) \
-                        or (outs[0] == targets[1]):
+                    if ((outs[0] == targets[0]) or (outs[0] == targets[1]) and (outs[1] == targets[0]) or (outs[1] == targets[1])):
                         accuracies[name] += 1
                     val_losses[name] += self.model.loss(T.FloatTensor(output[presize:presize + output_size]), T.FloatTensor(target[presize:presize + output_size])).item()
                     presize += output_size
