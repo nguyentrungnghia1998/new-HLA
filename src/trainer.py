@@ -77,7 +77,7 @@ class Trainer:
                 if batch_idx % self.save_every == 0 and batch_idx != 0 or batch_idx == len(train_batches) - 1:
                     self.model.save()
                     self.model.save_train_losses(self.train_losses)
-                    self.valid_acc, valid_loss = self.test()		# Trả về kết quả accuracy từng batch của tập test
+                    self.valid_acc, valid_loss, _, _ = self.test()		# Trả về kết quả accuracy từng batch của tập test
                     t.set_postfix(val_acc=self.valid_acc)
                     self.model._train()
 
@@ -129,10 +129,20 @@ class Trainer:
             print('Skipping test')
         self.model._eval()
         accuracies = {}
+        num_output = {}
+        num_target = {}
+        true_output = {}
+        true_target = {}
         val_losses = {}
+        precision = {}
+        recall = {}
         for name, output_size in self.model.outputs_size:		# Quét vòng for đến tất cả các HLA và số output tương ứng
             accuracies[name] = 0
             val_losses[name] = 0
+            num_output[name] = np.zeros(output_size)
+            num_target[name] = np.zeros(output_size)
+            true_output[name] = np.zeros(output_size)
+            true_target[name] = np.zeros(output_size)
             
         with T.no_grad():		# Tắt gradient các tensor trong khối lệnh phía dưới 
             # t = tqdm(zip(self.test_loader['data'], self.test_loader['label']), desc="Testing")
@@ -144,7 +154,20 @@ class Trainer:
                     targets = target[presize:presize + output_size].argsort()[-2:][::-1]
                     if ((outs[0] == targets[0]) or (outs[0] == targets[1]) and (outs[1] == targets[0]) or (outs[1] == targets[1])):
                         accuracies[name] += 1
+                    num_output[name][outs[0]]+=1
+                    num_output[name][outs[1]]+=1
+                    num_target[name][outs[0]]+=1
+                    num_target[name][outs[1]]+=1
+                    if (outs[0]==targets[0]) or (outs[0] == targets[1]):
+                        true_target[name][outs[0]]+=1
+                    if (outs[1]==targets[0]) or (outs[1] == targets[1]):
+                        true_target[name][outs[1]]+=1
+                    if (targets[0]==outs[0]) or (targets[0]==outs[1]):
+                        true_output[name][targets[0]]+=1
+                    if (targets[1]==outs[0]) or (targets[1]==outs[1]):
+                        true_output[name][targets[1]]+=1
                     val_losses[name] += self.model.loss(T.FloatTensor(output[presize:presize + output_size]), T.FloatTensor(target[presize:presize + output_size])).item()
                     presize += output_size
-        return [np.round(acc / len(self.test_loader['data']), 2) for acc in accuracies.values()], np.mean(list(val_losses.values()))/(_iter+1)
-
+                    precision[name] = np.divide(true_output[name],num_target[name],out=np.zeros_like(true_output[name],dtype=np.float64),where=num_target[name]!=0)
+                    recall[name] = np.divide(true_target[name],num_output[name],out=np.zeros_like(true_target[name],dtype=np.float64),where=num_output[name]!=0)
+        return [np.round(acc / len(self.test_loader['data']), 2) for acc in accuracies.values()], np.mean(list(val_losses.values()))/(_iter+1), precision, recall

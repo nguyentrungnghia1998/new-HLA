@@ -31,6 +31,16 @@ def parse_args():
 def save_acc(accuracy, name_acc):
     with open(str(parse_args().output_path) + "/kfold_acc_model_2D.txt", 'a') as f:
         f.writelines(name_acc + str(accuracy)+"\n")
+def save_precision(precision, name_precision):
+    with open(str(parse_args().output_path) + "/kfold_precision_model_2D.txt", 'a') as f:
+        f.writelines(name_precision + "\n")
+        for i in precision:
+            f.writelines(i+":"+str(precision[i])+"\n")
+def save_recall(recall, name_recall):
+    with open(str(parse_args().output_path) + "/kfold_recall_model_2D.txt", 'a') as f:
+        f.writelines(name_recall + "\n")
+        for i in recall:
+            f.writelines(i+":"+str(recall[i])+"\n")
 def plot_box_plot(accuracy_folds):
     mean = np.mean(accuracy_folds, axis = 0)
     std = np.std(accuracy_folds,axis=0)
@@ -95,6 +105,9 @@ def main():
         print("Accuracy of fold ", fold, ":", trainer.valid_acc)
         save_acc(trainer.valid_acc, "Accuracy of fold " + str(fold) +": ")
         
+        _,_,precision,recall = trainer.test()
+        save_precision(precision,"Precision of fold " + str(fold) +": ")
+        save_recall(recall,"Recall of fold "+ str(fold)+": ")
         accuracy_folds.append(trainer.valid_acc)
         fold +=1
 
