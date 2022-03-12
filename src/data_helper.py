@@ -2,6 +2,7 @@ import pickle
 from cyvcf2 import VCF		# Thư viện để làm việc với file VCF
 import pandas as pd
 import numpy as np
+import seaborn as sns
 
 def load_vcf_file(path, index_path, saved=True, nrows=None):
     '''
