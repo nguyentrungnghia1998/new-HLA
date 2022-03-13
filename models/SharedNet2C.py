@@ -11,7 +11,7 @@ import numpy as np
 from torch import optim
 from torchsummary.torchsummary import summary		# Tóm lại một mô hình dưới dạng 1 sơ đồ khối có đầu ra mỗi lớp
 
-config = json.load(open('models/Model_1D.json'))
+config = json.load(open('models/Model_2C.json'))
 
 class PrivatedNet(nn.Module):
     def __init__(self, name, input_size, output_size):
@@ -22,20 +22,19 @@ class PrivatedNet(nn.Module):
         self.fc1 = nn.Linear(input_size, fc1_len).to(self.device)		# Khai báo lớp tuyến tính cho từng HLA riêng.S
         self.bn1 = nn.BatchNorm1d(fc1_len).to(self.device)
         self.fc2 = nn.Linear(fc1_len, fc2_len).to(self.device)
-        self.fc3 = nn.Linear(fc2_len, output_size).to(self.device)
+        self.bn2 = nn.BatchNorm1d(fc2_len).to(self.device)
+        self.fc3 = nn.Linear(fc1_len, output_size).to(self.device)
         
     def forward(self, x):
         out = F.relu(self.bn1(self.fc1(x)))
-        #out = F.relu(self.fc2(out))		# Thêm hàm relu để phi tuyến hóa kết quả sau lớp linear
-        #out = self.fc3(out)
-        out = self.fc2(out)
+        # out = F.relu(self.bn2(self.fc2(out)))		# Thêm hàm relu để phi tuyến hóa kết quả sau lớp linear
         out = self.fc3(out)
         return torch.softmax(out, dim=1)
         
 
-class SharedNet1D(nn.Module):
+class SharedNet2C(nn.Module):
     def __init__(self, input_size, outputs_size):
-        super(SharedNet1D, self).__init__()
+        super(SharedNet2C, self).__init__()
         self.name = 'SharedNet'
         self.input_size = input_size		# Số đầu vào của mạng SharedNet chứa tất cả các loại HLA
         self.outputs_size = outputs_size
@@ -48,13 +47,13 @@ class SharedNet1D(nn.Module):
         fc_len = config['HLA_Shared']["fc_len"]
         self.p_dropout = config['HLA_Shared']["p_dropout"]
         w_size = config['HLA_Shared']["w_size"]
-        self.linear_input = ((((input_size - conv1_kernel_size) // w_size + 1) // max_pool_size - conv2_kernel_size) // w_size + 1) // 2		# Số đầu vào của lớp fully connected
+        self.linear_input = ((((input_size[1] - conv1_kernel_size) // w_size + 1) // max_pool_size - conv2_kernel_size) // w_size + 1) // 2		# Số đầu vào của lớp fully connected
         self.relu = nn.ReLU().to(self.device)
         self.pool1 = nn.MaxPool1d(2, stride=max_pool_size).to(self.device)
         self.pool2 = nn.MaxPool1d(2, stride=max_pool_size).to(self.device)
-        self.conv1 = nn.Conv1d(1, conv1_num_filter, kernel_size=conv1_kernel_size, stride=w_size).to(self.device)		# 2 lớp tích chập
+        self.conv1 = nn.Conv2d(1, conv1_num_filter, kernel_size=(2, conv1_kernel_size), stride=w_size).to(self.device)		# 2 lớp tích chập
         self.conv2 = nn.Conv1d(conv1_num_filter, conv2_num_filter, kernel_size=conv2_kernel_size, stride=w_size).to(self.device)
-        self.bn1 = nn.BatchNorm1d(conv1_num_filter).to(self.device)
+        self.bn1 = nn.BatchNorm2d(conv1_num_filter).to(self.device)
         self.bn2 = nn.BatchNorm1d(conv2_num_filter).to(self.device)
         self.fc = nn.Linear(conv2_num_filter * self.linear_input, fc_len).to(self.device)
         self.fc_len = fc_len		# Lớp tuyến tính cuối cùng
@@ -63,8 +62,9 @@ class SharedNet1D(nn.Module):
                            for name, output_size in outputs_size]
         
     def forward(self, x):
-        x = x.reshape(-1, 1, self.input_size)		# Chuyển đầu vào thành dạng 3D numpy array
+        x = x.reshape(-1, 1, self.input_size[0], self.input_size[1])		# Chuyển đầu vào thành dạng 3D numpy array
         out = F.relu(self.bn1(self.conv1(x)))		
+        out = out.reshape(-1, out.size()[1], out.size()[3])		# Chuyển đầu vào thành dạng 3D numpy array
         out = self.pool1(out)
         out = F.relu(self.bn2(self.conv2(out)))
         out = self.pool2(out)
@@ -86,27 +86,45 @@ class SharedNet1D(nn.Module):
     
     def predict(self, x):
         x = torch.FloatTensor(np.array(x)).to(self.device).detach()		# Chuyển đầu ra x về dạng torch tensor
-        x = x.reshape(-1, self.input_size)
+        x = x.reshape(-1, self.input_size[0], self.input_size[1])		# Chuyển đầu ra x về dạng 3D numpy array
         output = self.forward(x)
         return output.cpu().data.numpy().flatten()
  
     def set_loss_function(self, loss):
-        if loss == "mse":
-            self.loss = nn.MSELoss()		# Hàm loss là tổng bình phương sai lệch
-        elif loss == "cross_entropy":
-            self.loss = nn.CrossEntropyLoss()
-        elif loss == "bce":
-            self.loss = nn.BCELoss()		# Hàm loss là binary cross entropy, với đầu ra 2 lớp
-        elif loss == "bce_logits":
-            self.loss = nn.BCEWithLogitsLoss()		# Hàm BCE logit sau đầu ra dự báo có thêm sigmoid, giống BCE
-        elif loss == "l1":
-            self.loss = nn.L1Loss()
-        elif loss == "smooth_l1":
-            self.loss = nn.SmoothL1Loss()		# Hàm L1 loss nhưng có đỉnh được làm trơn, khả vi với mọi điểm
-        elif loss == "soft_margin":
-            self.loss = nn.SoftMarginLoss()		# Hàm tối ưu logistic loss 2 lớp của mục tiêu và đầu ra dự báo
+        if self.device=="cpu":
+            if loss == "mse":
+                self.loss = nn.MSELoss()		# Hàm loss là tổng bình phương sai lệch
+            elif loss == "cross_entropy":
+                self.loss = nn.CrossEntropyLoss()
+            elif loss == "bce":
+                self.loss = nn.BCELoss()		# Hàm loss là binary cross entropy, với đầu ra 2 lớp
+            elif loss == "bce_logits":
+                self.loss = nn.BCEWithLogitsLoss()		# Hàm BCE logit sau đầu ra dự báo có thêm sigmoid, giống BCE
+            elif loss == "l1":
+                self.loss = nn.L1Loss()
+            elif loss == "smooth_l1":
+                self.loss = nn.SmoothL1Loss()		# Hàm L1 loss nhưng có đỉnh được làm trơn, khả vi với mọi điểm
+            elif loss == "soft_margin":
+                self.loss = nn.SoftMarginLoss()		# Hàm tối ưu logistic loss 2 lớp của mục tiêu và đầu ra dự báo
+            else:
+                raise ValueError("Loss function not found")
         else:
-            raise ValueError("Loss function not found")
+            if loss == "mse":
+                self.loss = nn.MSELoss().cuda()		# Hàm loss là tổng bình phương sai lệch
+            elif loss == "cross_entropy":
+                self.loss = nn.CrossEntropyLoss().cuda()
+            elif loss == "bce":
+                self.loss = nn.BCELoss().cuda()		# Hàm loss là binary cross entropy, với đầu ra 2 lớp
+            elif loss == "bce_logits":
+                self.loss = nn.BCEWithLogitsLoss().cuda()		# Hàm BCE logit sau đầu ra dự báo có thêm sigmoid, giống BCE
+            elif loss == "l1":
+                self.loss = nn.L1Loss().cuda()
+            elif loss == "smooth_l1":
+                self.loss = nn.SmoothL1Loss().cuda()		# Hàm L1 loss nhưng có đỉnh được làm trơn, khả vi với mọi điểm
+            elif loss == "soft_margin":
+                self.loss = nn.SoftMarginLoss().cuda()		# Hàm tối ưu logistic loss 2 lớp của mục tiêu và đầu ra dự báo
+            else:
+                raise ValueError("Loss function not found")
         
     def set_optimizer(self, optimizer, lr):
         if optimizer == "sgd":
@@ -144,12 +162,12 @@ class SharedNet1D(nn.Module):
         print("Model loaded")
         
 def main():
-    model = SharedNet1D(input_size=101506, outputs_size=[('HLA_A', 42), ('HLA_B', 69), ('HLA_C', 41),
+    model = SharedNet2C(input_size=(2, 101506), outputs_size=[('HLA_A', 42), ('HLA_B', 69), ('HLA_C', 41),
                                                     ('HLA_DRB1', 64), ('HLA_DQA1', 37), ('HLA_DQB1', 30),
                                                     ('HLA_DPA1', 37), ('HLA_DPB1', 37)])
-    summary(model, (1, 101506), device='cpu', batch_size=1)
+    summary(model, (2, 101506), device='cpu', batch_size=64)
     for _model in model.HLA_layers:
-        summary(_model, (256, ), device='cpu', batch_size=1)
+        summary(_model, (256, ), device='cpu', batch_size=64)
     
 if __name__ == "__main__":
     main()
