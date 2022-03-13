@@ -40,22 +40,6 @@ class Trainer:
         self.valid_accuracy_epoch=[]
         self.test_acc = []
         
-    def split_batch(self, dataset, batch_size=None, shuffle=False):
-        """
-        Split dataset into batches
-        :param dataset: dataset
-        :param batch_size: batch size
-        :return: batches
-        """
-        if shuffle:
-            dataset = shuffle_data(dataset)		# Nếu gọi biến shuffle thì trộn bộ dữ liệu đã cho
-        batches = []
-        if batch_size is None:
-            batch_size = len(dataset['data'])		# Nếu không khai báo batch_size thì coi như là huấn luyện toàn bộ dữ liệu
-        for i in range(0, len(dataset['data']), batch_size):
-            batches.append((dataset['data'][i:i + batch_size], dataset['label'][i:i + batch_size]))
-        return batches
-    
     def transform_dataset(self, dataset, mode='train', batch_size=64, shuffle=True):
         """
         Transform dataset to batchs
@@ -77,9 +61,18 @@ class Trainer:
                 batches.append((T_input_batch, T_target_batch))
             return batches
         elif mode == 'test':
-            T_input_batch = Variable(T.FloatTensor(np.array(dataset['data'])\
+            inputs = []
+            targets = []
+            for i in range(len(dataset['data'])):
+                row = dataset['data'][i]
+                row_1 = [dataset['data'][i][0], dataset['data'][i][0]]
+                row_2 = [dataset['data'][i][1], dataset['data'][i][1]]
+                inputs.extend([row_1, row_2])
+                targets.extend([dataset['label'][i], dataset['label'][i]])
+                
+            T_input_batch = Variable(T.FloatTensor(np.array(inputs)\
                 .astype(np.float64)).to(self.device), requires_grad=False)
-            T_target_batch = Variable(T.FloatTensor(np.array(dataset['label'])\
+            T_target_batch = Variable(T.FloatTensor(np.array(targets)\
                 .astype(np.float64)).to(self.device), requires_grad=False)
             return (T_input_batch, T_target_batch)
     
@@ -132,21 +125,16 @@ class Trainer:
             targets = test_dataset[1].cpu().numpy()
             outputs = self.model(inputs).cpu().numpy()		# Lấy đầu ra của mạng nơ ron ở cuối mô hình
             presize = 0
-            length = len(self.test_loader['data'])
+            length = len(self.test_loader['data']) * 2
             for output, target in zip(outputs, targets):
                 for name, output_size in self.model.outputs_size:
-                    allele_labels = output[presize:presize + output_size].argsort()[-2:][-2:][::-1]
-                    if output[allele_labels[0]] < 0.5:
-                        continue
-                    if output[allele_labels[1]] < 0.5:
-                        allele_labels[1] = allele_labels[0]
+                    allele_label = output[presize:presize + output_size].argsort()[-1]
                     allele_targets = target[presize:presize + output_size].argsort()[-2:][::-1]
                     if output[allele_targets[1]] == 0:
                         allele_targets[1] = allele_targets[0]
-                    if ((allele_labels[0] == allele_targets[0]) or \
-                        (allele_labels[0] == allele_targets[1])) and \
-                            ((allele_labels[1] == allele_targets[0]) or \
-                                (allele_labels[1] == allele_targets[1])):
+                        
+                    if ((allele_label == allele_targets[0]) or \
+                        (allele_label == allele_targets[1])):
                         accuracies[name] += 1
                         
                     val_losses[name] += self.model.loss(T.FloatTensor(output[presize:presize + output_size]), T.FloatTensor(target[presize:presize + output_size])).item()
