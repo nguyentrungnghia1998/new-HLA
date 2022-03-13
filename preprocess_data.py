@@ -1,5 +1,5 @@
 from src.data_helper import *
-from models.SharedNet2D import SharedNet2D
+from models.SharedNet2C import SharedNet2C
 import argparse		# Thư viện giúp tạo định nghĩa command line trong terminal
 
 from src.trainer import Trainer
@@ -92,7 +92,7 @@ def main():
             dataset['label'].append(label)
             
         dataset['input-size'] = len(dataset['data'][0])
-        dataset['type'] = "Model_1D"  
+        dataset['type'] = "1C"  
     else:
         for i in range(dataset_length):
             data_row = np.concatenate(([df.iloc[i].values], [df.iloc[i + dataset_length].values]))
@@ -106,7 +106,7 @@ def main():
             dataset['label'].append(label)
             
         dataset['input-size'] = (2, len(dataset['data'][0][0]))
-        dataset['type'] = "Model_2D"   
+        dataset['type'] = "2C"   
     dataset['columns'] = columns
     dataset['outputs-size'] = [['HLA_' + col, len(df_allele_labels[col].iloc[0])] for col in columns]
     save_to_bin(dataset, args.data_path.replace('.vcf.gz', '.bin'))
