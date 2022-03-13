@@ -1,7 +1,7 @@
 from ipaddress import collapse_addresses
 from sklearn import preprocessing
 from src.data_helper import *
-from models.SharedNet1D import SharedNet1D
+from models.SharedNet1C import SharedNet1D
 import argparse		# Thư viện giúp tạo định nghĩa command line trong terminal
 
 import os
