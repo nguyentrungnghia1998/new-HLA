@@ -88,8 +88,8 @@ def main():
 
     print("\nAverage accuracy:  ", np.mean(accuracy_folds, axis=0))
     print("\nStandart variation: ",np.std(accuracy_folds, axis=0))
-    save_acc(np.mean(accuracy_folds, axis = 0), "\nAverage accuracy:  ")
-    save_acc(np.std(accuracy_folds, axis = 0), "\nStandart variation:  ")
+    save_acc(args.output_path, np.mean(accuracy_folds, axis = 0), "\nAverage accuracy:  ")
+    save_acc(args.output_path, np.std(accuracy_folds, axis = 0), "\nStandart variation:  ")
     plot_box_plot(accuracy_folds)
     
 if __name__ == "__main__":

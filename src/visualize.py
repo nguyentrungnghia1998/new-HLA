@@ -19,7 +19,7 @@ def save_train_valid_losses(train_losses, valid_losses, fold, model_name, out_di
     plt.plot(train_losses,"-b",  label="train_losses") 
     plt.plot(valid_losses,"-r", label="valid_losses") 
     plt.legend(loc="upper right")
-    plt.show()
+    # plt.show()
     out_dir = 'output/train_valid_losses'
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
@@ -32,7 +32,7 @@ def save_valid_acc(train_losses, valid_accuracy_epoch, fold, model_name, out_dir
     for j in range(len(name)):
         plt.plot(np_accu[j],label=name[j])
     plt.legend(loc="upper right")
-    plt.show()
+    # plt.show()
     out_dir = 'output/train_valid_acc'
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
