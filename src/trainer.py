@@ -32,6 +32,7 @@ class Trainer:
         self.save_name = save_name
         self.verbose = verbose          # Chọn cách thức hiển thị kết quả sau mỗi vòng lặp 
         self.train_losses = []
+        self.hla_types = [out[0] for out in self.model.outputs_size]
 
         self.valid_losses = []
         self.test_losses = []           # Tính loss của các tập train, test, validation mỗi epoch 
@@ -111,8 +112,9 @@ class Trainer:
             self.valid_losses.append(valid_loss)
             self.valid_accuracy_epoch.append(self.valid_acc)
             save_train_valid_losses(self.train_losses, self.valid_losses, fold=self.fold,
-                                    model_name=self.model.name)
-            save_valid_acc(self.train_losses, self.valid_accuracy_epoch, fold=self.fold, model_name=self.model.name)
+                            model_name=self.model.name, hla_types=self.hla_types)
+            save_valid_acc(self.train_losses, self.valid_accuracy_epoch, fold=self.fold,
+                           model_name=self.model.name, hla_types=self.hla_types)
        
     def test(self):
         if len(self.test_loader['data']) == 0:
