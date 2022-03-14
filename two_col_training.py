@@ -35,8 +35,8 @@ def main():
     ''' load csv file '''
     dataset = load_from_bin(args.data_path.replace('.vcf.gz', '.bin'))
     
-    if dataset['type'] != "2C":
-       raise ValueError("Wrong dataset type, 2C is expected. Got {}".format(dataset['type']))
+    # if dataset['type'] != "2C":
+    #    raise ValueError("Wrong dataset type, 2C is expected. Got {}".format(dataset['type']))
    
     trainset, testset = split_dataset(dataset, 0.9, shuffle=True)
     
