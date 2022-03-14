@@ -29,7 +29,7 @@ class PrivatedNet(nn.Module):
         out = F.relu(self.bn1(self.fc1(x)))
         # out = F.relu(self.bn2(self.fc2(out)))		# Thêm hàm relu để phi tuyến hóa kết quả sau lớp linear
         out = self.fc3(out)
-        return torch.sigmoid(out)
+        return torch.softmax(out, dim=1)
         
 
 class SharedNet2C(nn.Module):
