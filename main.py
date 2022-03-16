@@ -5,10 +5,7 @@ from pipeline.one_col_training import trainning as trainning_1c
 from pipeline.preprocess_data import pretrain
 
 '''
-python3 main.py --pipeline pretrain,train2c --data-path 'input/consensus23.phased.HLA.bin' \
-    --index-path 'input/test.list' --label-path 'input/DGV4VN_1006.Kourami_result.nonsort.csv' \
-    --sample 10009 --colapsed --model-name 'model.pt' --output-path 'output' \
-    -l bce -o adam -k 10 -e 2 -lr 0.007 -b 64 -n 1 -p 5 -s 100 -d ./trainned_models -v
+python3 main.py --pipeline train2c --sample 20000 --model-name model.pt --epochs 5
 
 '''
 
