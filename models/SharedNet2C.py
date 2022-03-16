@@ -35,7 +35,8 @@ class PrivatedNet(nn.Module):
 class SharedNet2C(nn.Module):
     def __init__(self, input_size, outputs_size):
         super(SharedNet2C, self).__init__()
-        self.name = 'SharedNet'
+        self.name = 'SharedNet2C'
+        self.model_path = None
         self.input_size = input_size		# Số đầu vào của mạng SharedNet chứa tất cả các loại HLA
         self.outputs_size = outputs_size
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
