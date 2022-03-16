@@ -138,7 +138,7 @@ class Trainer:
                 output = self.model.predict(data)
                 presize = 0
                 for name, output_size in self.model.outputs_size:
-                    allele_outs = output[presize:presize + output_size].argsort()[-2:][::-1]
+                    allele_outs = output[presize:presize + output_size].cpu().numpy().argsort()[-2:][::-1]
                     allele_target = target[presize:presize + output_size].cpu().numpy().argsort()[-2:][::-1]
                     if ((allele_outs[0] == allele_target[0]) or \
                         (allele_outs[0] == allele_target[1] and \
