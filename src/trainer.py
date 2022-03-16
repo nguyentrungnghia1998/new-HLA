@@ -11,14 +11,15 @@ from src.visualize import *
 from src.data_helper import shuffle_data
 
 class Trainer:
-    def __init__(self, model, loss, optimizer, train_loader=None, test_loader=None, fold=1,
+    def __init__(self, model=None, loss='bce', optimizer='adam', train_loader=None, test_loader=None, fold=1,
                  device=T.device("cuda" if T.cuda.is_available() else "cpu"), lr=0.0005, epochs=200, batch_size=64,
                  n_repeats = 2, print_every=1, save_every=500,
                  save_dir="./trainned_models",
                  save_name="model.pt", verbose=True):
         self.model = model
-        self.model.set_loss_function(loss)
-        self.model.set_optimizer(optimizer, lr)         # Khai báo hàm loss, model, learning rate và thuật toán tối ưu
+        self.loss = loss
+        self.lr = lr
+        self.optimizer = optimizer
         self.train_loader = train_loader
         self.test_loader = test_loader          # Khai báo biến load của 2 tập train và test
         self.fold = fold 
@@ -32,7 +33,7 @@ class Trainer:
         self.save_name = save_name
         self.verbose = verbose          # Chọn cách thức hiển thị kết quả sau mỗi vòng lặp 
         self.train_losses = []
-        self.hla_types = [out[0] for out in self.model.outputs_size]
+        self.hla_types = []
 
         self.valid_losses = []
         self.test_losses = []           # Tính loss của các tập train, test, validation mỗi epoch 
@@ -76,13 +77,18 @@ class Trainer:
             T_target_batch = Variable(T.FloatTensor(np.array(targets)\
                 .astype(np.float64)).to(self.device), requires_grad=False)
                 
-            # T_input_batch = Variable(T.FloatTensor(np.array(dataset['data'])\
-            #     .astype(np.float64)).to(self.device), requires_grad=False)
-            # T_target_batch = Variable(T.FloatTensor(np.array(dataset['label'])\
-            #     .astype(np.float64)).to(self.device), requires_grad=False)
             return (T_input_batch, T_target_batch)
     
     def train(self):
+        self.hla_types = [out[0] for out in self.model.outputs_size]
+        if self.fold >= 0:
+            model_path = 'trainned_models/' + self.model.name + '/fold_' + str(self.fold) + '/' + \
+                '_'.join(self.hla_types)
+        else:
+            self.model.name = self.model.name + '.' + '_'.join(self.hla_types)
+        self.model.set_loss_function(self.loss)
+        self.model.set_optimizer(self.optimizer, self.lr)         # Chon hàm loss, model, learning rate và thuật toán tối ưu
+        
         self.model.to(self.device)
         self.model._train()              # Chuyển model về gpu nếu có, và xác lập chế độ train 
         for iter in range(self.epochs):
@@ -99,7 +105,7 @@ class Trainer:
                 t.set_postfix(loss=loss.item())         # Đặt hiển thị loss ở cuối thanh tiến trình n 
 
                 if batch_idx % self.save_every == 0 and batch_idx != 0 or batch_idx == len(train_batches) - 1:
-                    self.model.save()
+                    self.model.save(path=model_path)
                     self.model.save_train_losses(self.train_losses)
                     self.valid_acc, valid_loss = self.test()            # Trả về kết quả accuracy từng batch của tập test
                     t.set_postfix(val_acc=self.valid_acc)

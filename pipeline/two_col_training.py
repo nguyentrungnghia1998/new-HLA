@@ -26,7 +26,6 @@ def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None,
     label_1D = np.zeros((trainset['label'].shape[0], 1))
 
     trainer = Trainer(
-        model=SharedNet2C(dataset['input-size'], dataset['outputs-size']),
         loss=loss,
         optimizer=optimizer,
         epochs=epochs,
@@ -54,6 +53,7 @@ def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None,
         valset_kfold['data'] = trainset['data'][val_idx]
         valset_kfold['label'] = trainset['label'][val_idx]
 
+        trainer.model = SharedNet2C(dataset['input-size'], dataset['outputs-size'])
         trainer.train_loader = trainset_kfold
         trainer.test_loader = valset_kfold
         trainer.fold = fold
@@ -73,8 +73,10 @@ def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None,
     plot_box_plot(accuracy_folds)
     
     print('-----------------------------------------------------')
+    trainer.model = SharedNet2C(dataset['input-size'], dataset['outputs-size'])
     trainer.train_loader = trainset
     trainer.test_loader = testset
+    trainer.fold = -1
     trainer.train()
     trainer.test()
     print("\nAccuracy of the whole dataset: ", trainer.valid_acc)
