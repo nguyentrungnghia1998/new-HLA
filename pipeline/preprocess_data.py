@@ -1,39 +1,25 @@
 from src.data_helper import *
-from models.SharedNet2C import SharedNet2C
-import argparse		# Thư viện giúp tạo định nghĩa command line trong terminal
 
-from src.trainer import Trainer
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--data-path', type=str, default='input/test_subsample.vcf.gz')
-    parser.add_argument('--index-path', type=str, default='input/test.list')
-    parser.add_argument('--label-path', type=str, default='input/DGV4VN_1006.Kourami_result.nonsort.csv')
-    parser.add_argument('--output-path', type=str, default='output')
-    parser.add_argument('--sample', type=int, default=10009)
-    parser.add_argument('--colapsed', action='store_true')
-    
-    args = parser.parse_args() 
-    return args
-
-
-def main():
-    args = parse_args()
+def pretrain(data_path=None, index_path=None, label_path=None, 
+             hla_types=['A'],colapsed=False, nrows=None, saved=True):
     ''' read vcf file and convert to csv format '''
-    df = load_vcf_file(args.data_path, 
-                            index_path=args.index_path, 
-                            nrows=args.sample,
+    df = load_vcf_file(data_path, 
+                            index_path=index_path, 
+                            nrows=nrows,
                             saved=False)
     
-    label_df_file_path = args.label_path
+    label_df_file_path = label_path
     label_df = pd.read_csv(label_df_file_path, index_col=0)
     label_df = label_df.set_index(np.array(['_'.join(x.split('_')[:4]) 
                                             for x in label_df.index.to_numpy()]))
     label_df.sort_index(inplace=True)
+    
     # columns = label_df.columns
-    columns = ['A_1', 'A_2', 'B_1', 'B_2', 'C_1', 'C_2', 'DQA1_1', 'DQA1_2', 'DQB1_1',
-    'DQB1_2', 'DRB1_1', 'DRB1_2', 'DPB1_1', 'DPB1_2']
+    columns = []
+    for hla in hla_types:
+        columns.extend([hla.upper() + '_' + x for x in ['1', '2']])
     one_hot_encoder = {}
+    
     # fill nan in label_df with '0'
     label_df = label_df.fillna('0')
     for i in range(0, len(columns), 2):
@@ -83,7 +69,7 @@ def main():
         'label': []
     }
     dataset_length = len(df) // 2
-    if args.colapsed:
+    if colapsed:
         for i in range(dataset_length):
             data_row = np.logical_or(df.iloc[i].values, df.iloc[i + dataset_length].values)
             label = np.logical_or(df_allele_labels['label'].iloc[i], 
@@ -109,7 +95,10 @@ def main():
         dataset['type'] = "2C"   
     dataset['columns'] = columns
     dataset['outputs-size'] = [['HLA_' + col, len(df_allele_labels[col].iloc[0])] for col in columns]
-    save_to_bin(dataset, args.data_path.replace('.vcf.gz', '.bin'))
     
-if __name__ == "__main__":
-    main()
+    if saved:
+        save_to_bin(dataset, data_path.replace('.vcf.gz', '.' + dataset['type'] + '.' + \
+            '_'.join(hla_types) + '.bin'))
+    
+    return dataset
+    

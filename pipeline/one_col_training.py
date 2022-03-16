@@ -1,13 +1,8 @@
 from src.data_helper import *
-from models.SharedNet2C import SharedNet2C
+from models.SharedNet1C import SharedNet1C
 import argparse		# Thư viện giúp tạo định nghĩa command line trong terminal
-import os
 from sklearn.model_selection import StratifiedKFold
-import matplotlib.pyplot as plt
-import matplotlib
-
 from src.visualize import *
-matplotlib.use('AGG')
 from src.trainer import Trainer
 
 def parse_args():
@@ -30,8 +25,7 @@ def parse_args():
     args = parser.parse_args() 
     return args
 
-def main():
-    args = parse_args()
+def trainning(args):
     ''' load csv file '''
     dataset = load_from_bin(args.data_path.replace('.vcf.gz', '.bin'))
     
@@ -46,10 +40,29 @@ def main():
 
     sample_feature_2D = np.reshape(trainset['data'],(trainset['data'].shape[0], -1))
     label_1D = np.zeros((trainset['label'].shape[0], 1))
+
+    trainer = Trainer(
+        model=SharedNet1C(dataset['input-size'], dataset['outputs-size']),
+        train_loader=trainset_kfold,
+        test_loader=valset_kfold,
+        loss=args.loss,
+        optimizer=args.optimizer,
+        fold=fold,
+        epochs=args.epochs,
+        lr=args.lr,
+        batch_size=args.batch_size,
+        n_repeats=args.n_repeats,
+        print_every=args.print_every,
+        save_every=args.save_every,
+        save_dir=args.save_dir,
+        verbose=args.verbose
+        )
+    
     print('-----------------------------------------------------')
-    fold = 1
+    
     accuracy_folds = []
-    for train_idx, val_idx in list(kfold.split(sample_feature_2D, label_1D)):
+    for iter, (train_idx, val_idx) in enumerate(list(kfold.split(sample_feature_2D, label_1D))):
+        fold = iter + 1
         print("Fold {}/{}".format(fold, args.k_fold))
 
         trainset_kfold = {}
@@ -60,37 +73,24 @@ def main():
         valset_kfold['data'] = trainset['data'][val_idx]
         valset_kfold['label'] = trainset['label'][val_idx]
 
-        trainer = Trainer(
-            model=SharedNet2C(dataset['input-size'], dataset['outputs-size']),
-            train_loader=trainset_kfold,
-            test_loader=valset_kfold,
-            loss=args.loss,
-            optimizer=args.optimizer,
-            fold=fold,
-            epochs=args.epochs,
-            lr=args.lr,
-            batch_size=args.batch_size,
-            n_repeats=args.n_repeats,
-            print_every=args.print_every,
-            save_every=args.save_every,
-            save_dir=args.save_dir,
-            verbose=args.verbose
-            )
+        trainer.train_loader = trainset_kfold
+        trainer.test_loader = valset_kfold,
+        trainer.fold = fold
         trainer.train()
 
         print("Accuracy of fold ", fold, ":", trainer.valid_acc)
         save_acc(args.output_path, trainer.valid_acc, "Accuracy of fold " + str(fold) +": ")
-        # _,_,precision,recall = trainer.test()
-        # save_precision(args.output_path, precision,"Precision of fold " + str(fold) +": ")
-        # save_recall(args.output_path, recall,"Recall of fold "+ str(fold)+": ")
         accuracy_folds.append(trainer.valid_acc)
         fold +=1
+        
+    print('-----------------------------------------------------')
 
     print("\nAverage accuracy:  ", np.mean(accuracy_folds, axis=0))
     print("\nStandart variation: ",np.std(accuracy_folds, axis=0))
-    save_acc(np.mean(accuracy_folds, axis = 0), "\nAverage accuracy:  ")
-    save_acc(np.std(accuracy_folds, axis = 0), "\nStandart variation:  ")
+    save_acc(args.output_path, np.mean(accuracy_folds, axis = 0), "\nAverage accuracy:  ")
+    save_acc(args.output_path, np.std(accuracy_folds, axis = 0), "\nStandart variation:  ")
     plot_box_plot(accuracy_folds)
     
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    trainning(args)
