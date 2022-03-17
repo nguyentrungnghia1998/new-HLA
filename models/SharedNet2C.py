@@ -87,10 +87,10 @@ class SharedNet2C(nn.Module):
             HLA.eval()		# Hàm gọi chế độ test, mạng nơ ron con không được cập nhật trong chế độ này
     
     def predict(self, x):
-        x = torch.FloatTensor(np.array(x)).to(self.device).detach()		# Chuyển đầu ra x về dạng torch tensor
+        x = torch.FloatTensor(np.array(x.cpu())).to(self.device).detach()		# Chuyển đầu ra x về dạng torch tensor
         x = x.reshape(-1, self.input_size[0], self.input_size[1])		# Chuyển đầu ra x về dạng 3D numpy array
         output = self.forward(x)
-        return output.cpu().data.numpy().flatten()
+        return output.data.flatten()
  
     def set_loss_function(self, loss):
         if self.device=="cpu":
