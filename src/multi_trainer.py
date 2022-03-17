@@ -140,12 +140,12 @@ class Trainer:
                 output = self.model.predict(data)
                 presize = 0
                 for name, output_size in self.model.outputs_size:
-                    allele_outs = output[presize:presize + output_size].argsort()[-2:][::-1]
+                    allele_outs = output[presize:presize + output_size].cpu().numpy().argsort()[-2:][::-1]
                     allele_target = target[presize:presize + output_size].cpu().numpy().argsort()[-2:][::-1]
                     if ((allele_outs[0] == allele_target[0]) or \
                         (allele_outs[0] == allele_target[1] and \
                         target[presize:presize + output_size].cpu().numpy()[allele_target[1]]==1)):
                         accuracies[name] += 1
-                    val_losses[name] += self.model.loss(T.FloatTensor(output[presize:presize + output_size]), T.FloatTensor(target[presize:presize + output_size])).item()
+                    val_losses[name] += self.model.loss(output,target.detach()).item()
                     presize += output_size
         return [np.round(acc / len(self.test_loader['data']) / 2, 2) for acc in accuracies.values()], np.mean(list(val_losses.values()))/(_iter+1)
