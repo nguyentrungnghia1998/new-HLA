@@ -1,61 +1,41 @@
 from src.data_helper import *
 from models.SharedNet1C import SharedNet1C
-import argparse		# Thư viện giúp tạo định nghĩa command line trong terminal
 from sklearn.model_selection import StratifiedKFold
 from src.visualize import *
-from src.trainer import Trainer
+from src.single_trainer import Trainer
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--data-path', type=str, default='input/consensus23.phased.HLA.bin')
-    parser.add_argument('--model-name', type=str, default='model.pt')
-    parser.add_argument('--output-path', type=str, default='output')
-    parser.add_argument('-l', '--loss', type=str, default='bce')
-    parser.add_argument('-o', '--optimizer', type=str, default='adam')
-    parser.add_argument('-k', '--k-fold', type=int, default=10)
-    parser.add_argument('-e', '--epochs', type=int, default=2)
-    parser.add_argument('--lr', type=float, default=0.005)
-    parser.add_argument('-b', '--batch-size', type=int, default=64)
-    parser.add_argument('-n', '--n-repeats', type=int, default=1)
-    parser.add_argument('-p', '--print-every', type=int, default=5)
-    parser.add_argument('-s', '--save-every', type=int, default=100)
-    parser.add_argument('-d', '--save-dir', type=str, default='./trainned_models')
-    parser.add_argument('-v', '--verbose', action='store_true')
-    parser.add_argument('--sample', type=int, default=10009)
-    args = parser.parse_args() 
-    return args
-
-def trainning(args):
-    ''' load csv file '''
-    dataset = load_from_bin(args.data_path.replace('.vcf.gz', '.bin'))
+def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None, 
+             epochs=False, lr=None, batch_size=True, num_folds=None,
+             n_repeats=None, print_every=None, save_every=None,
+             output_path=None, save_dir=None, verbose=False):
     
-    if dataset['type'] != "2C":
-       raise ValueError("Wrong dataset type, 2C is expected. Got {}".format(dataset['type']))
+    if dataset is None:
+        ''' load csv file '''
+        dataset = load_from_bin(dataset_path)
+    
+    if dataset['type'] != "1C":
+       raise ValueError("Wrong dataset type, 1C is expected. Got {}".format(dataset['type']))
    
     trainset, testset = split_dataset(dataset, 0.9, shuffle=True)
     
     print('input_size: {}, output_size: {}'.format(dataset['input-size'], dataset['outputs-size']))
     
-    kfold = StratifiedKFold(n_splits=args.k_fold, shuffle=True, random_state=42)
+    kfold = StratifiedKFold(n_splits=num_folds, shuffle=True, random_state=42)
 
     sample_feature_2D = np.reshape(trainset['data'],(trainset['data'].shape[0], -1))
     label_1D = np.zeros((trainset['label'].shape[0], 1))
 
     trainer = Trainer(
-        model=SharedNet1C(dataset['input-size'], dataset['outputs-size']),
-        train_loader=trainset_kfold,
-        test_loader=valset_kfold,
-        loss=args.loss,
-        optimizer=args.optimizer,
-        fold=fold,
-        epochs=args.epochs,
-        lr=args.lr,
-        batch_size=args.batch_size,
-        n_repeats=args.n_repeats,
-        print_every=args.print_every,
-        save_every=args.save_every,
-        save_dir=args.save_dir,
-        verbose=args.verbose
+        loss=loss,
+        optimizer=optimizer,
+        epochs=epochs,
+        lr=lr,
+        batch_size=batch_size,
+        n_repeats=n_repeats,
+        print_every=print_every,
+        save_every=save_every,
+        save_dir=save_dir,
+        verbose=verbose
         )
     
     print('-----------------------------------------------------')
@@ -63,7 +43,7 @@ def trainning(args):
     accuracy_folds = []
     for iter, (train_idx, val_idx) in enumerate(list(kfold.split(sample_feature_2D, label_1D))):
         fold = iter + 1
-        print("Fold {}/{}".format(fold, args.k_fold))
+        print("Fold {}/{}".format(fold, num_folds))
 
         trainset_kfold = {}
         trainset_kfold['data'] = trainset['data'][train_idx]
@@ -73,13 +53,14 @@ def trainning(args):
         valset_kfold['data'] = trainset['data'][val_idx]
         valset_kfold['label'] = trainset['label'][val_idx]
 
+        trainer.model = SharedNet1C(dataset['input-size'], dataset['outputs-size'])
         trainer.train_loader = trainset_kfold
-        trainer.test_loader = valset_kfold,
+        trainer.test_loader = valset_kfold
         trainer.fold = fold
         trainer.train()
 
         print("Accuracy of fold ", fold, ":", trainer.valid_acc)
-        save_acc(args.output_path, trainer.valid_acc, "Accuracy of fold " + str(fold) +": ")
+        save_acc(output_path, trainer.valid_acc, "Accuracy of fold " + str(fold) +": ")
         accuracy_folds.append(trainer.valid_acc)
         fold +=1
         
@@ -87,10 +68,18 @@ def trainning(args):
 
     print("\nAverage accuracy:  ", np.mean(accuracy_folds, axis=0))
     print("\nStandart variation: ",np.std(accuracy_folds, axis=0))
-    save_acc(args.output_path, np.mean(accuracy_folds, axis = 0), "\nAverage accuracy:  ")
-    save_acc(args.output_path, np.std(accuracy_folds, axis = 0), "\nStandart variation:  ")
-    plot_box_plot(accuracy_folds)
+    save_acc(output_path, np.mean(accuracy_folds, axis = 0), "\nAverage accuracy:  ")
+    save_acc(output_path, np.std(accuracy_folds, axis = 0), "\nStandart variation:  ")
+    plot_box_plot(accuracy_folds, [hla[0] for hla in trainer.model.outputs_size])
     
-if __name__ == "__main__":
-    args = parse_args()
-    trainning(args)
+    print('-----------------------------------------------------')
+    trainer.model = SharedNet1C(dataset['input-size'], dataset['outputs-size'])
+    trainer.train_loader = trainset
+    trainer.test_loader = testset
+    trainer.fold = -1
+    trainer.train()
+    trainer.test()
+    print("\nAccuracy of the whole dataset: ", trainer.valid_acc)
+    save_acc(output_path, trainer.valid_acc, "\nAccuracy of the whole dataset: ")
+    print('-----------------------------------------------------')
+    

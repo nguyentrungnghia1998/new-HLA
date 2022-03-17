@@ -54,10 +54,11 @@ def save_recall(path, recall, name_recall):
         for i in recall:
             f.writelines(i+":"+str(recall[i])+"\n")
             
-def plot_box_plot(accuracy_folds):
+def plot_box_plot(accuracy_folds, hla_types):
     mean = np.mean(accuracy_folds, axis = 0)
     std = np.std(accuracy_folds,axis=0)
-    name=['HLA_A','HLA_B','HLA_C','HLA_DQA1','HLA_DQB1','HLA_DRB1','HLA_DPB1']
+    
+    name=hla_types
     fig = plt.figure()
     plt.errorbar(name,mean,std,ls='none')
     # plt.show()
