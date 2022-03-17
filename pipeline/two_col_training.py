@@ -2,10 +2,10 @@ from src.data_helper import *
 from models.SharedNet2C import SharedNet2C
 from sklearn.model_selection import StratifiedKFold
 from src.visualize import *
-from src.trainer import Trainer
+from src.multi_trainer import Trainer
 
 def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None, 
-             epochs=False, lr=None, batch_size=True, num_folds=None,
+             epochs=False, lr=None, batch_size=True, use_cross_validation=True, num_folds=None,
              n_repeats=None, print_every=None, save_every=None,
              output_path=None, save_dir=None, verbose=False):
     
@@ -39,47 +39,49 @@ def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None,
         )
     
     print('-----------------------------------------------------')
-    
-    accuracy_folds = []
-    for iter, (train_idx, val_idx) in enumerate(list(kfold.split(sample_feature_2D, label_1D))):
-        fold = iter + 1
-        print("Fold {}/{}".format(fold, num_folds))
+    if use_cross_validation:
+        accuracy_folds = []
+        for iter, (train_idx, val_idx) in enumerate(list(kfold.split(sample_feature_2D, label_1D))):
+            fold = iter + 1
+            print("Fold {}/{}".format(fold, num_folds))
 
-        trainset_kfold = {}
-        trainset_kfold['data'] = trainset['data'][train_idx]
-        trainset_kfold['label'] = trainset['label'][train_idx]
+            trainset_kfold = {}
+            trainset_kfold['data'] = trainset['data'][train_idx]
+            trainset_kfold['label'] = trainset['label'][train_idx]
+            
+            valset_kfold = {}
+            valset_kfold['data'] = trainset['data'][val_idx]
+            valset_kfold['label'] = trainset['label'][val_idx]
+
+            trainer.model = SharedNet2C(dataset['input-size'], dataset['outputs-size'])
+            trainer.train_loader = trainset_kfold
+            trainer.test_loader = valset_kfold
+            trainer.fold = fold
+            trainer.train()
+
+            print("Accuracy of fold ", fold, ":", trainer.valid_acc)
+            save_acc(output_path, trainer.valid_acc, "Accuracy of fold " + str(fold) +": ")
+            accuracy_folds.append(trainer.valid_acc)
+            fold +=1
+            
+        print('-----------------------------------------------------')
+
+        print("\nAverage accuracy:  ", np.mean(accuracy_folds, axis=0))
+        print("\nStandart variation: ",np.std(accuracy_folds, axis=0))
+        save_acc(output_path, np.mean(accuracy_folds, axis = 0), "\nAverage accuracy:  ")
+        save_acc(output_path, np.std(accuracy_folds, axis = 0), "\nStandart variation:  ")
+        plot_box_plot(accuracy_folds, [hla[0] for hla in trainer.model.outputs_size])
+        print('-----------------------------------------------------')
         
-        valset_kfold = {}
-        valset_kfold['data'] = trainset['data'][val_idx]
-        valset_kfold['label'] = trainset['label'][val_idx]
-
-        trainer.model = SharedNet2C(dataset['input-size'], dataset['outputs-size'])
-        trainer.train_loader = trainset_kfold
-        trainer.test_loader = valset_kfold
-        trainer.fold = fold
-        trainer.train()
-
-        print("Accuracy of fold ", fold, ":", trainer.valid_acc)
-        save_acc(output_path, trainer.valid_acc, "Accuracy of fold " + str(fold) +": ")
-        accuracy_folds.append(trainer.valid_acc)
-        fold +=1
-        
-    print('-----------------------------------------------------')
-
-    print("\nAverage accuracy:  ", np.mean(accuracy_folds, axis=0))
-    print("\nStandart variation: ",np.std(accuracy_folds, axis=0))
-    save_acc(output_path, np.mean(accuracy_folds, axis = 0), "\nAverage accuracy:  ")
-    save_acc(output_path, np.std(accuracy_folds, axis = 0), "\nStandart variation:  ")
-    plot_box_plot(accuracy_folds)
-    
-    print('-----------------------------------------------------')
     trainer.model = SharedNet2C(dataset['input-size'], dataset['outputs-size'])
     trainer.train_loader = trainset
     trainer.test_loader = testset
     trainer.fold = -1
+    trainer.model.load(path='trainned_models/SharedNet2C/HLA_A/multi_training/SharedNet2C_model.pt')
     trainer.train()
     trainer.test()
     print("\nAccuracy of the whole dataset: ", trainer.valid_acc)
     save_acc(output_path, trainer.valid_acc, "\nAccuracy of the whole dataset: ")
     print('-----------------------------------------------------')
+    return trainer.model
     

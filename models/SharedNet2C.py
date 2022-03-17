@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from logging import raiseExceptions
 import os
 import torch
 import torch.nn as nn		# Module chứa các lớp trong mạng nơ-ron thường dùng
@@ -156,11 +157,11 @@ class SharedNet2C(nn.Module):
         torch.save(self.state_dict(), "{}/{}.pt".format(path, model_name))
         # print("Model saved")
         
-    def load(self, path='./trainned_model', model_name=None):
-        if model_name is None:
-            model_name = self.name + '_model'
-        self.load_state_dict(torch.load("{}/{}.pt".format(path, model_name)))		# Lấy lại model đã lưu trước đó
-        # print("Model loaded")
+    def load(self, path=None):
+        if path is None:
+            raiseExceptions("Path is None")
+            
+        self.load_state_dict(torch.load(path))
         
 def main():
     model = SharedNet2C(input_size=(2, 101506), outputs_size=[('HLA_A', 42), ('HLA_B', 69), ('HLA_C', 41),

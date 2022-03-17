@@ -12,7 +12,7 @@ from src.data_helper import shuffle_data
 
 class Trainer:
     def __init__(self, model=None, loss='bce', optimizer='adam', train_loader=None, test_loader=None, fold=1,
-                 device=T.device("cuda" if T.cuda.is_available() else "cpu"), lr=0.0005, epochs=200, batch_size=64,
+                 device=None, lr=0.0005, epochs=200, batch_size=64,
                  n_repeats = 2, print_every=1, save_every=500,
                  save_dir="./trainned_models",
                  save_name="model.pt", verbose=True):
@@ -23,7 +23,7 @@ class Trainer:
         self.train_loader = train_loader
         self.test_loader = test_loader          # Khai báo biến load của 2 tập train và test
         self.fold = fold 
-        self.device = device
+        self.device = T.device("cuda" if T.cuda.is_available() else "cpu")
         self.epochs = epochs
         self.batch_size = batch_size
         self.n_repeats = n_repeats              # Số lần lặp lại quá trình học
@@ -63,29 +63,20 @@ class Trainer:
                 batches.append((T_input_batch, T_target_batch))
             return batches
         elif mode == 'test':
-            inputs = []
-            targets = []
-            for i in range(len(dataset['data'])):
-                row = dataset['data'][i]
-                row_1 = [row[0], row[0]]
-                row_2 = [row[1], row[1]]
-                inputs.extend([row_1, row_2])
-                targets.extend([dataset['label'][i], dataset['label'][i]])
-                
-            T_input_batch = Variable(T.FloatTensor(np.array(inputs)\
+            T_inputs = Variable(T.FloatTensor(np.array(dataset['data'])\
                 .astype(np.float64)).to(self.device), requires_grad=False)
-            T_target_batch = Variable(T.FloatTensor(np.array(targets)\
+            T_targets = Variable(T.FloatTensor(np.array(dataset['label'])\
                 .astype(np.float64)).to(self.device), requires_grad=False)
-                
-            return (T_input_batch, T_target_batch)
+            return T_inputs, T_targets
     
     def train(self):
         self.hla_types = [out[0] for out in self.model.outputs_size]
         if self.fold >= 0:
             model_path = 'trainned_models/' + self.model.name + '/fold_' + str(self.fold) + '/' + \
-                '_'.join(self.hla_types)
+                '_'.join(self.hla_types) + '/single_training'
         else:
-            self.model.name = self.model.name + '.' + '_'.join(self.hla_types)
+            model_path = 'trainned_models/' + self.model.name + '/' + \
+                '_'.join(self.hla_types) + '/single_training'
         self.model.set_loss_function(self.loss)
         self.model.set_optimizer(self.optimizer, self.lr)         # Chon hàm loss, model, learning rate và thuật toán tối ưu
         

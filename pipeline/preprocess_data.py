@@ -95,10 +95,10 @@ def pretrain(data_path=None, index_path=None, label_path=None,
         dataset['type'] = "2C"   
     dataset['columns'] = columns
     dataset['outputs-size'] = [['HLA_' + col, len(df_allele_labels[col].iloc[0])] for col in columns]
-    
+    dataset['path'] = data_path.replace('.vcf.gz', '.' + dataset['type'] + '.' + \
+            '_'.join(hla_types) + '.bin')
     if saved:
-        save_to_bin(dataset, data_path.replace('.vcf.gz', '.' + dataset['type'] + '.' + \
-            '_'.join(hla_types) + '.bin'))
+        save_to_bin(dataset, dataset['path'])
     
     return dataset
     
