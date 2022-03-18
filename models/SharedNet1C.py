@@ -22,21 +22,20 @@ class PrivatedNet(nn.Module):
         self.fc1 = nn.Linear(input_size, fc1_len).to(self.device)		# Khai báo lớp tuyến tính cho từng HLA riêng.S
         self.bn1 = nn.BatchNorm1d(fc1_len).to(self.device)
         self.fc2 = nn.Linear(fc1_len, fc2_len).to(self.device)
-        self.fc3 = nn.Linear(fc2_len, output_size).to(self.device)
+        self.bn2 = nn.BatchNorm1d(fc2_len).to(self.device)
+        self.fc3 = nn.Linear(fc1_len, output_size).to(self.device)
         
     def forward(self, x):
         out = F.relu(self.bn1(self.fc1(x)))
-        #out = F.relu(self.fc2(out))		# Thêm hàm relu để phi tuyến hóa kết quả sau lớp linear
-        #out = self.fc3(out)
-        out = self.fc2(out)
+        # out = F.relu(self.bn2(self.fc2(out)))		# Thêm hàm relu để phi tuyến hóa kết quả sau lớp linear
         out = self.fc3(out)
         return torch.softmax(out, dim=1)
-        
-
+    
 class SharedNet1C(nn.Module):
     def __init__(self, input_size, outputs_size):
         super(SharedNet1C, self).__init__()
-        self.name = 'SharedNet'
+        self.name = 'SharedNet1C'
+        self.model_path = None
         self.input_size = input_size		# Số đầu vào của mạng SharedNet chứa tất cả các loại HLA
         self.outputs_size = outputs_size
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -65,6 +64,7 @@ class SharedNet1C(nn.Module):
     def forward(self, x):
         x = x.reshape(-1, 1, self.input_size)		# Chuyển đầu vào thành dạng 3D numpy array
         out = F.relu(self.bn1(self.conv1(x)))		
+        out = out.reshape(-1, out.size()[1], out.size()[2])		# Chuyển đầu vào thành dạng 3D numpy array
         out = self.pool1(out)
         out = F.relu(self.bn2(self.conv2(out)))
         out = self.pool2(out)
@@ -73,7 +73,7 @@ class SharedNet1C(nn.Module):
         outs = [HLA.forward(out) for HLA in self.HLA_layers]		# Tính các đầu ra ứng với mỗi mạng HLA con 
         out = torch.cat(outs, dim=1)
         return out
-    
+
     def _train(self):
         self.train()
         for HLA in self.HLA_layers:

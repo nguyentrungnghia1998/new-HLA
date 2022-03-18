@@ -162,7 +162,7 @@ class SharedNet2C(nn.Module):
             raiseExceptions("Path is None")
             
         self.load_state_dict(torch.load(path))
-        
+        print('Model loaded from {}'.format(path))
 def main():
     model = SharedNet2C(input_size=(2, 101506), outputs_size=[('HLA_A', 42), ('HLA_B', 69), ('HLA_C', 41),
                                                     ('HLA_DRB1', 64), ('HLA_DQA1', 37), ('HLA_DQB1', 30),

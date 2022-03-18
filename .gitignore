@@ -6,7 +6,8 @@
 # Node artifact files
 node_modules/
 dist/
-
+output/
+trainned_models/
 # Compiled Java class files
 *.class
 

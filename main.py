@@ -1,8 +1,7 @@
 
 import argparse
 from pipeline.collection import collection
-from pipeline.two_col_training import trainning as trainning_2c
-from pipeline.one_col_training import trainning as trainning_1c
+from pipeline.trainning import trainning
 from pipeline.preprocess_data import pretrain
 
 '''
@@ -14,7 +13,7 @@ python3 main.py --pipeline pretrain,train2c --data-path 'input/consensus23.phase
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pipeline', type=str, default='train2c,collect,train1c')
+    parser.add_argument('--pipeline', type=str, default='collect')
     parser.add_argument('--data-path', type=str, default='input/consensus23.phased.HLA.vcf.gz')
     parser.add_argument('--dataset-path', type=str, default='input/consensus23.phased.HLA.2C.A.bin')
     parser.add_argument('--index-path', type=str, default='input/test.list')
@@ -24,7 +23,7 @@ def parse_args():
     parser.add_argument('--hla-types', type=str, default='A',
                         help='comma separated list of hla alleles to be used for training, \
                         e.g. A,B,C,DQA1,DQB1,DRB1,DPB1')
-    parser.add_argument('--model-path', type=str, default='trainned_models/SharedNet2C/HLA_A/multi_training/SharedNet2C_model.pt')
+    parser.add_argument('--model-path', type=str, default='./trainned_models/multi_train/SharedNet2C/SharedNet2C_model.pt')
     parser.add_argument('--output-path', type=str, default='output')
     parser.add_argument('-l', '--loss', type=str, default='bce')
     parser.add_argument('-o', '--optimizer', type=str, default='adam')
@@ -45,8 +44,9 @@ def main():
     args = parse_args()
     pipelines = args.pipeline.split(',')
     dataset = None
+    model = None
     if 'pretrain' in pipelines:
-        dataset = pretrain(data_path=args.data_path, 
+        dataset = pretrain( data_path=args.data_path, 
                             index_path=args.index_path, 
                             label_path=args.label_path,
                             hla_types=args.hla_types.split(','),
@@ -54,8 +54,8 @@ def main():
                             nrows=args.sample,
                             saved=True)
         
-    if 'train2c' in pipelines:
-        model = trainning_2c(dataset_path=args.dataset_path,
+    if 'train' in pipelines:
+        model = trainning(dataset_path=args.dataset_path,
                             dataset=dataset,
                             optimizer=args.optimizer,
                             loss=args.loss,
@@ -71,27 +71,24 @@ def main():
                             output_path=args.output_path,
                             verbose=args.verbose)
         
-        if 'collect' in pipelines:
-            dataset = collection(dataset_path=args.dataset_path,
-                        dataset=dataset,
-                        model=model,
-                        model_path=args.model_path)
-            
-        if 'train1c' in pipelines:
-            trainning_1c(dataset_path=args.dataset_path,
-                        dataset=dataset,
-                        optimizer=args.optimizer,
-                        loss=args.loss,
-                        num_folds=args.k_fold,
-                        epochs=args.epochs,
-                        lr=args.lr,
-                        batch_size=args.batch_size,
-                        n_repeats=args.n_repeats,
-                        print_every=args.print_every,
-                        save_every=args.save_every,
-                        save_dir=args.save_dir,
-                        output_path=args.output_path,
-                        verbose=args.verbose)
+        dataset = collection(dataset_path=args.dataset_path,
+                            dataset=dataset,
+                            model=model, model_path=args.model_path)
+        
+        trainning(dataset_path=args.dataset_path,
+                    dataset=dataset,
+                    optimizer=args.optimizer,
+                    loss=args.loss,
+                    num_folds=args.k_fold,
+                    epochs=args.epochs,
+                    lr=args.lr,
+                    batch_size=args.batch_size,
+                    n_repeats=args.n_repeats,
+                    print_every=args.print_every,
+                    save_every=args.save_every,
+                    save_dir=args.save_dir,
+                    output_path=args.output_path,
+                    verbose=args.verbose)
     
 if __name__ == '__main__':
     main()

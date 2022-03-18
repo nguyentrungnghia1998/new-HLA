@@ -50,8 +50,10 @@ def collection(dataset_path=None,
             model = SharedNet1C(dataset['input-size'], dataset['outputs-size'])
         else:
             raise ValueError("Dataset type is not supported")
-    
-    model._eval()
+        if model_path is not None:
+            model.load(path=model_path)
+            
+    # model._eval()
     
     new_dataset = {
         'data': [],
@@ -63,7 +65,7 @@ def collection(dataset_path=None,
         'path': dataset['path'].replace('2C', 'co-1C')
     }
     n_y_true = 0  
-    with T.no_grad():		# Tắt gradient các tensor trong khối lệnh phía dưới 
+    with T.no_grad():       # Tắt gradient các tensor trong khối lệnh phía dưới 
         dataset = transform_dataset(dataset)
         for idx, (inputs, targets) in enumerate(zip(dataset[0], dataset[1])):
             outputs = model(inputs.detach()).cpu().numpy()
@@ -71,7 +73,6 @@ def collection(dataset_path=None,
             out_0 = outputs[0]
             out_1 = outputs[1]
             target_ = targets[0]
-            allele_outs = []
             allele_targets = []
             is_candidate = True
             for name, output_size in model.outputs_size:
@@ -112,8 +113,9 @@ def collection(dataset_path=None,
                 new_dataset['label'].append(label[0])
                 new_dataset['data'].append(data[1][0])
                 new_dataset['label'].append(label[1])
+                
     save_to_bin(new_dataset, new_dataset['path'])
-        
+    print("Number of collection data: ", len(new_dataset['data'])//2)
     return new_dataset 
             
             

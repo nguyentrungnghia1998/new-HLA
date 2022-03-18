@@ -85,6 +85,8 @@ def save_to_bin(dataset, path):
     '''
     with open(path, 'wb') as f:
         pickle.dump(dataset, f)
+        
+    print('Saved to {}'.format(path))
 
 def load_from_bin(path):
     '''

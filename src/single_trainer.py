@@ -35,12 +35,32 @@ class Trainer:
         self.train_losses = []
         self.hla_types = []
 
-        self.valid_losses = []
+        self.val_losses = []
         self.test_losses = []           # Tính loss của các tập train, test, validation mỗi epoch 
         self.train_acc = []
-        self.valid_acc = []
-        self.valid_accuracy_epoch=[]
+        self.val_acc = []
+        self.val_accuracy=[]
         self.test_acc = []
+        self.trainning_fold = False
+        self.model_path = None
+        
+    def set_model_path(self):
+        if self.trainning_fold:
+            self.model_path = os.path.join(self.save_dir, 'multi_train', 
+                                           self.model.name + (''.join(self.hla_types)), 'fold_' + str(self.fold))
+        else:
+            self.model_path = os.path.join(self.save_dir, 'multi_train', self.model.name + (''.join(self.hla_types)))
+        
+    def set_model(self, model):
+        self.model = model
+        self.model.set_loss_function(self.loss)
+        self.model.set_optimizer(self.optimizer, self.lr)         # Chon hàm loss, model, learning rate và thuật toán tối ưu
+        self.model.to(self.device)
+        self.set_model_path()
+    
+    def set_dataset(self, train_loader, test_loader):
+        self.train_loader = train_loader
+        self.test_loader = test_loader
         
     def transform_dataset(self, dataset, mode='train', batch_size=64, shuffle=True):
         """
@@ -70,18 +90,11 @@ class Trainer:
             return T_inputs, T_targets
     
     def train(self):
-        self.hla_types = [out[0] for out in self.model.outputs_size]
-        if self.fold >= 0:
-            model_path = 'trainned_models/' + self.model.name + '/fold_' + str(self.fold) + '/' + \
-                '_'.join(self.hla_types) + '/single_training'
-        else:
-            model_path = 'trainned_models/' + self.model.name + '/' + \
-                '_'.join(self.hla_types) + '/single_training'
-        self.model.set_loss_function(self.loss)
-        self.model.set_optimizer(self.optimizer, self.lr)         # Chon hàm loss, model, learning rate và thuật toán tối ưu
+        if len(self.train_loader['data']) == 0:
+            raise Exception('Train dataset is empty')
         
-        self.model.to(self.device)
-        self.model._train()              # Chuyển model về gpu nếu có, và xác lập chế độ train 
+        self.model._train() # model to train mode, using batch norm and dropout
+        
         for iter in range(self.epochs):
             train_batches = self.transform_dataset(self.train_loader, mode='train', batch_size=self.batch_size, shuffle=True)
             t = tqdm(train_batches, desc="Epochs {}".format(iter))              # Khai báo 1 tiến trình tqdm cho từng batch 
@@ -92,27 +105,26 @@ class Trainer:
                 loss = self.model.loss(output, targets.detach())                # Tính hàm loss giữa đầu ra output và targets
                 loss.backward()
                 self.model.step()               # Cập nhật tham số mạng nơ ron ở cuối mô hình 
-                losses+=loss.item()
-                t.set_postfix(loss=loss.item())         # Đặt hiển thị loss ở cuối thanh tiến trình n 
-
-                if batch_idx % self.save_every == 0 and batch_idx != 0 or batch_idx == len(train_batches) - 1:
-                    self.model.save(path=model_path)
-                    self.model.save_train_losses(self.train_losses)
-                    self.valid_acc, valid_loss = self.test()            # Trả về kết quả accuracy từng batch của tập test
-                    t.set_postfix(val_acc=self.valid_acc)
-                    self.model._train()
-
-            losses = losses/len(train_batches)
-            print("\nValid_loss: ", valid_loss)
-            print('Train_loss: ',losses)
-            self.train_losses.append(losses)
-            self.valid_losses.append(valid_loss)
-            self.valid_accuracy_epoch.append(self.valid_acc)
-            save_train_valid_losses(self.train_losses, self.valid_losses, fold=self.fold,
+                losses += loss.item()
+                
+            self.model.save(path=self.model_path)
+            val_acc, val_loss = self.test()            # Trả về kết quả accuracy từng batch của tập test
+            t.set_postfix(train_loss=loss.item(), val_loss=val_loss, val_acc=val_acc)
+            
+            if self.verbose:
+                print('Epoch: {}/{}'.format(iter, self.epochs))
+                print('Train loss: {:.4f} \t Val loss: {:.4f}'.format(loss.item(), val_loss))
+                print('Val accuracy:', val_acc)
+                
+            self.train_losses.append(loss.item())
+            self.val_losses.append(val_loss)
+            self.val_accuracy.append(val_acc)
+            
+            save_train_val_losses(self.train_losses, self.val_losses, fold=self.fold,
                             model_name=self.model.name, hla_types=self.hla_types)
-            save_valid_acc(self.train_losses, self.valid_accuracy_epoch, fold=self.fold,
+            save_val_acc(self.train_losses, self.val_accuracy, fold=self.fold,
                            model_name=self.model.name, hla_types=self.hla_types)
-       
+        
     def test(self):
         if len(self.test_loader['data']) == 0:
             print('Skipping test')
