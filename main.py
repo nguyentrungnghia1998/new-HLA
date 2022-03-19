@@ -5,7 +5,7 @@ from pipeline.one_col_training import trainning as trainning_1c
 from pipeline.preprocess_data import pretrain
 
 '''
-python3 main.py --pipeline train2c --sample 20000 --model-name model.pt --epochs 5
+python3 main.py --pipeline train2c --sample 20000 --model-name model.pt --epochs 2 -k 4
 
 '''
 
@@ -51,7 +51,8 @@ def main():
                             saved=True)
         
     elif 'train2c' in pipelines:
-        trainning_2c(dataset_path=args.dataset_path,
+        trainning_2c(data_type="Two_columns",
+                    dataset_path=args.dataset_path,
                     dataset=dataset,
                     optimizer=args.optimizer,
                     loss=args.loss,

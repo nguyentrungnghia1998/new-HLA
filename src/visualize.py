@@ -14,16 +14,16 @@ def save_train_losses(train_losses, iter, model_name, out_dir='output/train_loss
         plt.show()
     fig.savefig("{}/{}_{}".format(out_dir, model_name, 'train_losses_fold_'+str(iter)+'.png'))
     
-def save_train_valid_losses(train_losses, valid_losses, fold, model_name, hla_types, out_dir='output/train_losses', display=False):
+def save_train_valid_losses(train_losses, valid_losses, fold,data_type,model_name, hla_types, out_dir='output/train_losses', display=False):
     fig=plt.figure()
     plt.plot(train_losses,"-b",  label="train_losses") 
     plt.plot(valid_losses,"-r", label="valid_losses") 
     plt.legend(loc="upper right")
     # plt.show()
-    out_dir = 'output/train_valid_losses'
+    out_dir = 'output/'+data_type+'/'+model_name+'/CrossValidationResults/Fold_'+str(fold)+'/'+hla_types
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
-    fig.savefig("{}/{}_{}".format(out_dir, model_name, 'train_valid_losses_fold_'+str(fold)+'.png'))
+    fig.savefig("{}/{}".format(out_dir, 'train_valid_losses.png'))
 
 def save_valid_acc(train_losses, valid_accuracy_epoch, fold, model_name, hla_types, out_dir='output/train_losses', display=False):
     fig=plt.figure()

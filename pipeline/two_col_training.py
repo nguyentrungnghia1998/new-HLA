@@ -4,7 +4,7 @@ from sklearn.model_selection import StratifiedKFold
 from src.visualize import *
 from src.trainer import Trainer
 
-def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None, 
+def trainning(data_type=None,dataset_path=None, dataset=None, optimizer=None, loss=None, 
              epochs=False, lr=None, batch_size=True, num_folds=None,
              n_repeats=None, print_every=None, save_every=None,
              output_path=None, save_dir=None, verbose=False):
@@ -26,6 +26,7 @@ def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None,
     label_1D = np.zeros((trainset['label'].shape[0], 1))
 
     trainer = Trainer(
+        data_type=data_type,
         loss=loss,
         optimizer=optimizer,
         epochs=epochs,

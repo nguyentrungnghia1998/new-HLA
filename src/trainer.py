@@ -11,12 +11,13 @@ from src.visualize import *
 from src.data_helper import shuffle_data
 
 class Trainer:
-    def __init__(self, model=None, loss='bce', optimizer='adam', train_loader=None, test_loader=None, fold=1,
+    def __init__(self, model=None, data_type="Two_columns",loss='bce', optimizer='adam', train_loader=None, test_loader=None, fold=1,
                  device=T.device("cuda" if T.cuda.is_available() else "cpu"), lr=0.0005, epochs=200, batch_size=64,
                  n_repeats = 2, print_every=1, save_every=500,
                  save_dir="./trainned_models",
                  save_name="model.pt", verbose=True):
         self.model = model
+        self.data_type=data_type
         self.loss = loss
         self.lr = lr
         self.optimizer = optimizer
@@ -117,11 +118,12 @@ class Trainer:
             self.train_losses.append(losses)
             self.valid_losses.append(valid_loss)
             self.valid_accuracy_epoch.append(self.valid_acc)
-            save_train_valid_losses(self.train_losses, self.valid_losses, fold=self.fold,
+            save_train_valid_losses(self.train_losses, self.valid_losses, fold=self.fold, data_type=self.data_type,
                             model_name=self.model.name, hla_types=self.hla_types)
-            save_valid_acc(self.train_losses, self.valid_accuracy_epoch, fold=self.fold,
+            save_valid_acc(self.train_losses, self.valid_accuracy_epoch, fold=self.fold, data_type=self.data_type,
                            model_name=self.model.name, hla_types=self.hla_types)
-       
+
+                           
     def test(self):
         if len(self.test_loader['data']) == 0:
             print('Skipping test')
