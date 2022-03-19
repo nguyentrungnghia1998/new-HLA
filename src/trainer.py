@@ -81,6 +81,9 @@ class Trainer:
             return (T_input_batch, T_target_batch)
     
     def train(self):
+        self.train_losses=[]
+        self.valid_losses=[]
+        self.valid_accuracy_epoch=[]
         self.hla_types = [out[0] for out in self.model.outputs_size]
         if self.fold >= 0:
             model_path = 'trainned_models/' + self.model.name + '/fold_' + str(self.fold) + '/' + \

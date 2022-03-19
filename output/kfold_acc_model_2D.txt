@@ -1,0 +1,25 @@
+Accuracy of fold 1: [0.83]
+Accuracy of fold 2: [0.85]
+Accuracy of fold 3: [0.84]
+Accuracy of fold 4: [0.86]
+
+Average accuracy:  [0.845]
+
+Standart variation:  [0.01118034]
+Accuracy of fold 1: [0.83]
+Accuracy of fold 2: [0.87]
+Accuracy of fold 3: [0.84]
+Accuracy of fold 4: [0.86]
+
+Average accuracy:  [0.85]
+
+Standart variation:  [0.01581139]
+Accuracy of fold 1: [0.83]
+Accuracy of fold 1: [0.85]
+Accuracy of fold 2: [0.86]
+Accuracy of fold 3: [0.86]
+Accuracy of fold 4: [0.86]
+
+Average accuracy:  [0.8575]
+
+Standart variation:  [0.00433013]
