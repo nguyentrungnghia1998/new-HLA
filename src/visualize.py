@@ -20,12 +20,12 @@ def save_train_valid_losses(train_losses, valid_losses, fold,data_type,model_nam
     plt.plot(valid_losses,"-r", label="valid_losses") 
     plt.legend(loc="upper right")
     # plt.show()
-    out_dir = 'output/'+data_type+'/'+model_name+'/CrossValidationResults/Fold_'+str(fold)+'/'+hla_types
+    out_dir = 'output/'+data_type+'/'+model_name+'/CrossValidationResults/Fold_'+str(fold)+'/'+'_'.join(hla_types)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     fig.savefig("{}/{}".format(out_dir, 'train_valid_losses.png'))
 
-def save_valid_acc(train_losses, valid_accuracy_epoch, fold, model_name, hla_types, out_dir='output/train_losses', display=False):
+def save_valid_acc(train_losses, valid_accuracy_epoch, fold, data_type,model_name, hla_types, out_dir='output/train_losses', display=False):
     fig=plt.figure()
     name=hla_types
     np_accu=np.array(valid_accuracy_epoch).T
@@ -33,10 +33,10 @@ def save_valid_acc(train_losses, valid_accuracy_epoch, fold, model_name, hla_typ
         plt.plot(np_accu[j],label=name[j])
     plt.legend(loc="upper right")
     # plt.show()
-    out_dir = 'output/train_valid_acc'
+    out_dir = 'output/'+data_type+'/'+model_name+'/CrossValidationResults/Fold_'+str(fold)+'/'+'_'.join(hla_types)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
-    fig.savefig("{}/{}_{}".format(out_dir, model_name, 'train_valid_acc_fold_'+str(fold)+'.png'))
+    fig.savefig("{}/{}".format(out_dir, 'validation_accuracy.png')
     
 def save_acc(path, accuracy, name_acc):
     with open(path + "/kfold_acc_model_2D.txt", 'a') as f:
