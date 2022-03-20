@@ -71,7 +71,7 @@ def trainning(data_type=None,dataset_path=None, dataset=None, optimizer=None, lo
     print("\nStandart variation: ",np.std(accuracy_folds, axis=0))
     save_acc(output_path, np.mean(accuracy_folds, axis = 0), "\nAverage accuracy:  ")
     save_acc(output_path, np.std(accuracy_folds, axis = 0), "\nStandart variation:  ")
-    plot_box_plot(accuracy_folds)
+    # plot_box_plot(accuracy_folds)
     
     print('-----------------------------------------------------')
     trainer.model = SharedNet2C(dataset['input-size'], dataset['outputs-size'])

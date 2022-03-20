@@ -89,7 +89,7 @@ class Trainer:
             model_path = 'trainned_models/' + self.model.name + '/fold_' + str(self.fold) + '/' + \
                 '_'.join(self.hla_types)
         else:
-            self.model.name = self.model.name + '.' + '_'.join(self.hla_types)
+            model_path = 'trainned_models/' + self.model.name + '/FinalResults/' + '_'.join(self.hla_types)
         self.model.set_loss_function(self.loss)
         self.model.set_optimizer(self.optimizer, self.lr)         # Chon hàm loss, model, learning rate và thuật toán tối ưu
         

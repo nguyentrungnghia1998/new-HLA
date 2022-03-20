@@ -19,10 +19,16 @@ def save_train_valid_losses(train_losses, valid_losses, fold,data_type,model_nam
     plt.plot(train_losses,"-b",  label="train_losses") 
     plt.plot(valid_losses,"-r", label="valid_losses") 
     plt.legend(loc="upper right")
-    out_dir = 'output/'+data_type+'/'+model_name+'/CrossValidationResults/Fold_'+str(fold)+'/'+'_'.join(hla_types)
+    if fold==-1:
+        our_dir = 'output/'+data_type+'/'+model_name+'/FinalTrainingResults/'+'_'.join(hla_types)
+    else:
+        out_dir = 'output/'+data_type+'/'+model_name+'/CrossValidationResults/Fold_'+str(fold)+'/'+'_'.join(hla_types)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
-    fig.savefig("{}/{}".format(out_dir, 'train_valid_losses.png'))
+    if fold==-1:
+        fig.savefig("{}/{}".format(out_dir, 'train_test_losses.png'))
+    else:
+        fig.savefig("{}/{}".format(out_dir, 'train_valid_losses.png'))
     #plt.show()
 
 def save_valid_acc(train_losses, valid_accuracy_epoch, fold, data_type,model_name, hla_types, out_dir='output/train_losses', display=False):
@@ -32,10 +38,16 @@ def save_valid_acc(train_losses, valid_accuracy_epoch, fold, data_type,model_nam
     for j in range(len(name)):
         plt.plot(np_accu[j],label=name[j])
     plt.legend(loc="upper right")
-    out_dir = 'output/'+data_type+'/'+model_name+'/CrossValidationResults/Fold_'+str(fold)+'/'+'_'.join(hla_types)
+    if fold==-1:
+        our_dir = 'output/'+data_type+'/'+model_name+'/FinalTrainingResults/'+'_'.join(hla_types)
+    else:
+        out_dir = 'output/'+data_type+'/'+model_name+'/CrossValidationResults/Fold_'+str(fold)+'/'+'_'.join(hla_types)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
-    fig.savefig("{}/{}".format(out_dir, 'validation_accuracy.png'))
+    if fold==-1:
+        fig.savefig("{}/{}".format(out_dir, 'test_accuracy.png'))
+    else:
+        fig.savefig("{}/{}".format(out_dir, 'validation_accuracy.png'))
     # plt.show()
     
 def save_acc(path, accuracy, name_acc):

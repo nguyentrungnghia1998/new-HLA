@@ -23,3 +23,29 @@ Accuracy of fold 4: [0.86]
 Average accuracy:  [0.8575]
 
 Standart variation:  [0.00433013]
+Accuracy of fold 1: [0.88]
+Accuracy of fold 2: [0.83]
+Accuracy of fold 3: [0.86]
+Accuracy of fold 4: [0.87]
+
+Average accuracy:  [0.86]
+
+Standart variation:  [0.01870829]
+Accuracy of fold 1: [0.87]
+Accuracy of fold 2: [0.85]
+Accuracy of fold 3: [0.84]
+Accuracy of fold 4: [0.88]
+
+Average accuracy:  [0.86]
+
+Standart variation:  [0.01581139]
+Accuracy of fold 1: [0.86]
+Accuracy of fold 2: [0.84]
+Accuracy of fold 3: [0.9]
+Accuracy of fold 4: [0.86]
+
+Average accuracy:  [0.865]
+
+Standart variation:  [0.02179449]
+
+Accuracy of the whole dataset: [0.9]
