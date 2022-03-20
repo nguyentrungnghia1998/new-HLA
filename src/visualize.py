@@ -46,7 +46,7 @@ def save_valid_acc(train_losses, valid_accuracy_epoch, fold, data_type,model_nam
         plt.savefig("{}/{}".format(out_dir, 'test_accuracy.png'))
     else:
         plt.savefig("{}/{}".format(out_dir, 'validation_accuracy.png'))
-    plt.show()
+    plt.close()
     
 def save_acc(path, accuracy, name_acc):
     with open(path + "/kfold_acc_model_2D.txt", 'a') as f:
