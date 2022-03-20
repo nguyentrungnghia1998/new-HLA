@@ -49,3 +49,13 @@ Average accuracy:  [0.865]
 Standart variation:  [0.02179449]
 
 Accuracy of the whole dataset: [0.9]
+Accuracy of fold 1: [0.86]
+Accuracy of fold 2: [0.88]
+Accuracy of fold 3: [0.84]
+Accuracy of fold 4: [0.83]
+
+Average accuracy:  [0.8525]
+
+Standart variation:  [0.01920286]
+
+Accuracy of the whole dataset: [0.86]
