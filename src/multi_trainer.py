@@ -100,6 +100,9 @@ class Trainer:
             return (T_input_batch, T_target_batch)
     
     def train(self):
+        self.train_losses=[]
+        self.val_losses=[]
+        self.val_accuracy=[]
         if len(self.train_loader['data']) == 0:
             raise Exception('Train dataset is empty')
         
@@ -130,10 +133,10 @@ class Trainer:
             self.val_losses.append(val_loss)
             self.val_accuracy.append(val_acc)
             
-            save_train_val_losses(self.train_losses, self.val_losses, fold=self.fold,
-                            model_name=self.model.name, hla_types=self.hla_types)
-            save_val_acc(self.train_losses, self.val_accuracy, fold=self.fold,
-                           model_name=self.model.name, hla_types=self.hla_types)
+            save_train_val_losses(self.train_losses, self.val_losses, self.trainning_fold, fold=self.fold,
+                            model_name=self.model.name,data_type="Multi_Trainer",hla_types=self.hla_types)
+            save_val_acc(self.train_losses, self.val_accuracy, self.trainning_fold, fold=self.fold,
+                           model_name=self.model.name,data_type="Multi_Trainer",hla_types=self.hla_types)
         
     def test(self):
         if len(self.test_loader['data']) == 0:

@@ -13,7 +13,7 @@ python3 main.py --pipeline pretrain,train2c --data-path 'input/consensus23.phase
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pipeline', type=str, default='collect')
+    parser.add_argument('--pipeline', type=str, default='train')
     parser.add_argument('--data-path', type=str, default='input/consensus23.phased.HLA.vcf.gz')
     parser.add_argument('--dataset-path', type=str, default='input/consensus23.phased.HLA.2C.A.bin')
     parser.add_argument('--index-path', type=str, default='input/test.list')
@@ -28,8 +28,8 @@ def parse_args():
     parser.add_argument('-l', '--loss', type=str, default='bce')
     parser.add_argument('-o', '--optimizer', type=str, default='adam')
     parser.add_argument('--use_cross_validation', action='store_true')
-    parser.add_argument('-k', '--k-fold', type=int, default=2)
-    parser.add_argument('-e', '--epochs', type=int, default=1)
+    parser.add_argument('-k', '--k-fold', type=int, default=4)
+    parser.add_argument('-e', '--epochs', type=int, default=3)
     parser.add_argument('--lr', type=float, default=0.005)
     parser.add_argument('-b', '--batch-size', type=int, default=64)
     parser.add_argument('-r', '--n-repeats', type=int, default=1)
@@ -70,7 +70,7 @@ def main():
                             save_dir=args.save_dir,
                             output_path=args.output_path,
                             verbose=args.verbose)
-        
+        """
         dataset = collection(dataset_path=args.dataset_path,
                             dataset=dataset,
                             model=model, model_path=args.model_path)
@@ -89,6 +89,6 @@ def main():
                     save_dir=args.save_dir,
                     output_path=args.output_path,
                     verbose=args.verbose)
-    
+    """
 if __name__ == '__main__':
     main()
