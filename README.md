@@ -47,7 +47,7 @@ pip install -r requirements.txt
 To create 2 folder trained_model, model output include figures, results of loss function, accuracy cross validation and evaluate test dataset. Trained model used to predict for actual data if test result is admissible
 
 ### Parameters in command
-
+```
 --pineline: 
 + pretrain if you only want to preprocess input data
 + train if you only want to train model
@@ -71,4 +71,36 @@ To create 2 folder trained_model, model output include figures, results of loss 
 
 --output-path: Path to base folder, save figures, results
 
--l: Select loss function:
+-l: Select loss function by string:
+'mse': Mean squared error
+'cross_entropy': Cross entropy loss
+'bce': Binary cross entropy loss
+'bce_logits': Use softmax function before binary cross entropy loss
+'l1': L1 loss
+'smooth_l1': Smooth L1 loss
+'soft_margin': Soft margin loss
+
+-o: Optimizer algorithm: 'sgd', 'adam', 'adadelta', 'adagrad', 'rmsprop'
+
+--use_cross_validation: Determine if use cross validation or not, store_true (use cross validation), store_false (not use cross validation)
+
+-k: Number of fold if use cross validation
+
+-e: Number of train epochs
+
+--lr: Learning rate 
+
+-b: batch size
+ 
+-r: n_repeats
+
+-v: Determine if display results after each epochs or not (train loss, validation loss, validation accuracy), store_true (display), store_false (not display)
+```
+### Run project and evaluate results
+
+``` 
+python main.py [define list of parameters]
+```
+
+Results in path, defined in --output-path variable, include figures of cross validation, final result.
+Trained model saved in path, defined in --model-path variable.
