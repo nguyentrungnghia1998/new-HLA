@@ -84,6 +84,7 @@ def main():
                     num_folds=args.k_fold,
                     epochs=args.epochs,
                     lr=args.lr,
+                    use_cross_validation=args.use_cross_validation,
                     batch_size=args.batch_size,
                     n_repeats=args.n_repeats,
                     print_every=args.print_every,
