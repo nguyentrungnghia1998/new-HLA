@@ -5,15 +5,15 @@ from pipeline.trainning import trainning
 from pipeline.preprocess_data import pretrain
 
 '''
-python3 main.py --pipeline pretrain,train2c --data-path 'input/consensus23.phased.HLA.bin' \
+python3 main.py --pipeline pretrain,train --data-path 'input/consensus23.phased.HLA.bin' \
     --index-path 'input/test.list' --label-path 'input/DGV4VN_1006.Kourami_result.nonsort.csv' \
-    --sample 10009 --colapsed --model-name 'model.pt' --output-path 'output' \
+    --sample 50009 --model-name 'model.pt' --output-path 'output' \
     -l bce -o adam -k 10 -e 2 -lr 0.007 -b 64 -n 1 -p 5 -s 100 -d ./trainned_models -v
 '''
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pipeline', type=str, default='collect')
+    parser.add_argument('--pipeline', type=str, default='pretrain,train')
     parser.add_argument('--data-path', type=str, default='input/consensus23.phased.HLA.vcf.gz')
     parser.add_argument('--dataset-path', type=str, default='input/consensus23.phased.HLA.2C.A.bin')
     parser.add_argument('--index-path', type=str, default='input/test.list')
