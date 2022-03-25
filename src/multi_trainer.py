@@ -89,8 +89,8 @@ class Trainer:
                 row = dataset['data'][i]
                 row_1 = [row[0], row[0]]
                 row_2 = [row[1], row[1]]
-                inputs.extend([row_1, row_2])
-                targets.extend([dataset['label'][i], dataset['label'][i]])
+                inputs.append([row_1, row_2])
+                targets.append(dataset['label'][i])
                 
             T_input_batch = Variable(T.FloatTensor(np.array(inputs)\
                 .astype(np.float64)).to(self.device), requires_grad=False)
@@ -145,20 +145,44 @@ class Trainer:
         for name, output_size in self.model.outputs_size:		# Quét vòng for đến tất cả các HLA và số output tương ứng
             accuracies[name] = 0
             val_losses[name] = 0
-            
+        
         with T.no_grad():		# Tắt gradient các tensor trong khối lệnh phía dưới 
             test_batches = self.transform_dataset(self.test_loader, mode='test')
-            for _iter, (data, target) in enumerate(zip(test_batches[0], test_batches[1])):		# Lấy số vòng lặp, data và target lần lượt trong tqdm
-                output = self.model.predict(data)
+            for _iter, (inputs, target) in enumerate(zip(test_batches[0], test_batches[1])):
+                outputs = self.model(inputs.detach()).cpu().numpy()
+                original_input = T.stack((inputs[0][0], inputs[1][0]))
+                original_output = self.model.predict(original_input)
                 presize = 0
+                out_0 = outputs[0]
+                out_1 = outputs[1]
                 for name, output_size in self.model.outputs_size:
-                    allele_outs = output[presize:presize + output_size].cpu().numpy().argsort()[-2:][::-1]
-                    allele_target = target[presize:presize + output_size].cpu().numpy().argsort()[-2:][::-1]
-                    if ((allele_outs[0] == allele_target[0]) or \
-                        (allele_outs[0] == allele_target[1] and \
-                        target[presize:presize + output_size].cpu().numpy()[allele_target[1]]==1)):
-                        accuracies[name] += 1
-                    val_losses[name] += self.model.loss(output, target.detach()).item()
-                    presize += output_size
+                    allele_out_idx_0 = out_0[presize:presize + output_size].argsort()[-1]
+                    allele_out_idx_1 = out_1[presize:presize + output_size].argsort()[-1]
+                    allele_target = target[presize:presize + output_size]
+                    allele_target_ids = allele_target.argsort().cpu().numpy()[-2:][::-1]
                     
-        return [np.round(acc / len(self.test_loader['data']) / 2, 2) for acc in accuracies.values()], np.mean(list(val_losses.values()))/(_iter+1)
+                    val_losses[name] += self.model.loss(target[presize:presize + output_size], 
+                                                        original_output[presize:presize + output_size]).item()
+                    
+                    if allele_target[allele_target_ids[1]] == 0:
+                        allele_target_ids[1] = allele_target_ids[0]
+                        
+                    if allele_out_idx_0 not in allele_target_ids or \
+                            allele_out_idx_1 not in allele_target_ids:
+                        presize += output_size
+                        break
+                    if allele_target_ids[0] != allele_target_ids[1] and \
+                        allele_out_idx_0 == allele_out_idx_1:
+                        presize += output_size
+                        break
+                    if allele_target_ids[0] != allele_target_ids[1]:
+                        if allele_out_idx_0 != allele_out_idx_1:
+                            accuracies[name] += 1
+                    else:
+                        if allele_out_idx_0 == allele_out_idx_1 and \
+                            allele_out_idx_0 == allele_target_ids[0]:
+                            accuracies[name] += 1
+                        
+                    presize += output_size
+                        
+        return [np.round(acc / len(self.test_loader['data']), 2) for acc in accuracies.values()], np.mean(list(val_losses.values()))/(_iter+1)
