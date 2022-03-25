@@ -19,9 +19,9 @@ def save_train_val_losses(train_losses, val_losses, training_fold, fold, model_n
     plt.plot(val_losses,"-r", label="valid_losses") 
     plt.legend(loc="upper right")
     if not training_fold:
-        out_dir = 'output/'+data_type+'/'+model_name+'/FinalTrainingResults/'+'_'.join(hla_types)
+        out_dir = 'output/'+data_type+'/'+model_name+'/FinalTrainingResults/HLA'+''.join(hla_types)
     else:
-        out_dir = 'output/'+data_type+'/'+model_name+'/CrossValidationResults/Fold_'+str(fold)+'/'+'_'.join(hla_types)
+        out_dir = 'output/'+data_type+'/'+model_name+'/CrossValidationResults/Fold_'+str(fold)+'/HLA'+''.join(hla_types)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     if not training_fold:
@@ -34,12 +34,12 @@ def save_val_acc(train_losses, val_accuracy, training_fold, fold, model_name,dat
     name=hla_types
     np_accu=np.array(val_accuracy).T
     for j in range(len(name)):
-        plt.plot(np_accu[j],label=name[j])
+        plt.plot(np_accu[j],label='HLA'+name[j])
     plt.legend(loc="upper right")
     if not training_fold:
-        out_dir = 'output/'+data_type+'/'+model_name+'/FinalTrainingResults/'+'_'.join(hla_types)
+        out_dir = 'output/'+data_type+'/'+model_name+'/FinalTrainingResults/HLA'+''.join(hla_types)
     else:
-        out_dir = 'output/'+data_type+'/'+model_name+'/CrossValidationResults/Fold_'+str(fold)+'/'+'_'.join(hla_types)
+        out_dir = 'output/'+data_type+'/'+model_name+'/CrossValidationResults/Fold_'+str(fold)+'/HLA'+''.join(hla_types)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     if not training_fold:

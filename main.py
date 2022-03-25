@@ -1,5 +1,7 @@
 
 import argparse
+
+from sympy import true
 from pipeline.collection import collection
 from pipeline.trainning import trainning
 from pipeline.preprocess_data import pretrain
@@ -27,7 +29,7 @@ def parse_args():
     parser.add_argument('--output-path', type=str, default='output')
     parser.add_argument('-l', '--loss', type=str, default='bce')
     parser.add_argument('-o', '--optimizer', type=str, default='adam')
-    parser.add_argument('--use_cross_validation', action='store_true')
+    parser.add_argument('--use_cross_validation', action='store_true', default=True)
     parser.add_argument('-k', '--k-fold', type=int, default=4)
     parser.add_argument('-e', '--epochs', type=int, default=3)
     parser.add_argument('--lr', type=float, default=0.005)
@@ -36,7 +38,7 @@ def parse_args():
     parser.add_argument('-p', '--print-every', type=int, default=5)
     parser.add_argument('-s', '--save-every', type=int, default=100)
     parser.add_argument('-d', '--save-dir', type=str, default='./trainned_models')
-    parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument('-v', '--verbose', action='store_true', default=True)
     args = parser.parse_args() 
     return args
 
