@@ -64,6 +64,7 @@ def collection(dataset_path=None,
         'type': '1C',
         'path': dataset['path'].replace('2C', 'co-1C')
     }
+    
     n_y_true = 0  
     with T.no_grad():       # Tắt gradient các tensor trong khối lệnh phía dưới 
         dataset = transform_dataset(dataset)
@@ -72,21 +73,17 @@ def collection(dataset_path=None,
             presize = 0
             out_0 = outputs[0]
             out_1 = outputs[1]
-            target_ = targets[0]
             allele_targets = []
             is_candidate = True
             for name, output_size in model.outputs_size:
                 allele_out_0 = out_0[presize:presize + output_size].argsort()[-1]
                 allele_out_1 = out_1[presize:presize + output_size].argsort()[-1]
-                allele_targets_index = target_[presize:presize + output_size]
+                allele_targets_index = targets[0][presize:presize + output_size]
                 allele_targets = allele_targets_index.argsort().cpu().numpy()[-2:][::-1]
                 
-                if allele_out_0 in allele_targets or\
-                    allele_out_1 in allele_targets:
-                        n_y_true += 1
-                        
                 if allele_targets_index[allele_targets[1]] == 0:
                     allele_targets[1] = allele_targets[0]
+                    
                 if allele_out_0 not in allele_targets or \
                         allele_out_1 not in allele_targets:
                     is_candidate = False
@@ -99,11 +96,11 @@ def collection(dataset_path=None,
                     break
                 if allele_targets[0] != allele_targets[1]:
                     if allele_out_0 == allele_targets[0]:
-                        targets[0][presize:presize + allele_targets[1]] = 0
-                        targets[1][presize:presize + allele_targets[0]] = 0
+                        targets[0][presize + allele_targets[1]] = 0
+                        targets[1][presize + allele_targets[0]] = 0
                     else:
-                        targets[0][presize:presize + allele_targets[0]] = 0
-                        targets[1][presize:presize + allele_targets[1]] = 0
+                        targets[0][presize + allele_targets[0]] = 0
+                        targets[1][presize + allele_targets[1]] = 0
                 presize += output_size
             
             if is_candidate:
@@ -115,7 +112,8 @@ def collection(dataset_path=None,
                 new_dataset['label'].append(label[1])
                 
     save_to_bin(new_dataset, new_dataset['path'])
-    print("Number of collection data: ", len(new_dataset['data'])//2)
+    print("Number of collection data: {}, ({}%)".format(len(new_dataset['data']),
+                                                        len(new_dataset['data'])/len(dataset['data'])*100))
     return new_dataset 
             
             
