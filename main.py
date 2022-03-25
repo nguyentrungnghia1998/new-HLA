@@ -15,7 +15,7 @@ python3 main.py --pipeline pretrain,train2c --data-path 'input/consensus23.phase
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pipeline', type=str, default='train')
+    parser.add_argument('--pipeline', type=str, default='pretrain,train')
     parser.add_argument('--data-path', type=str, default='input/consensus23.phased.HLA.vcf.gz')
     parser.add_argument('--dataset-path', type=str, default='input/consensus23.phased.HLA.2C.A.bin')
     parser.add_argument('--index-path', type=str, default='input/test.list')
@@ -72,7 +72,6 @@ def main():
                             save_dir=args.save_dir,
                             output_path=args.output_path,
                             verbose=args.verbose)
-        """
         dataset = collection(dataset_path=args.dataset_path,
                             dataset=dataset,
                             model=model, model_path=args.model_path)
@@ -91,6 +90,5 @@ def main():
                     save_dir=args.save_dir,
                     output_path=args.output_path,
                     verbose=args.verbose)
-    """
 if __name__ == '__main__':
     main()
