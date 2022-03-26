@@ -146,8 +146,8 @@ class Trainer:
                     allele_target = target[presize:presize + output_size].cpu().numpy().argsort()[-1]
                     if allele_out == allele_target:
                         accuracies[name] += 1
-                    val_losses[name] += self.model.loss(T.FloatTensor(output[presize:presize + output_size]), 
-                                                        T.FloatTensor(target[presize:presize + output_size])).item()
+                    val_losses[name] += self.model.loss(T.FloatTensor(output[presize:presize + output_size]).to(self.device), 
+                                                        T.FloatTensor(target[presize:presize + output_size]).to(self.device)).item()
                     presize += output_size
         return [np.round(acc / len(self.test_loader['data']), 2) for acc in accuracies.values()], \
             np.mean(list(val_losses.values()))/(_iter+1)

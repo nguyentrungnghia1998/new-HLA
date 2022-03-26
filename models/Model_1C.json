@@ -1,13 +1,13 @@
 {
     "HLA_Shared":{
-        "conv1_num_filter": 64, 
-        "conv2_num_filter": 512, 
+        "conv1_num_filter": 128, 
+        "conv2_num_filter": 256, 
         "conv1_kernel_size": 64, 
         "conv2_kernel_size": 64, 
-        "w_size": 16,
+        "w_size": 8,
         "max_pool_size": 2,
-        "p_dropout": 0.3,
-        "fc_len": 512
+        "p_dropout": 0.4,
+        "fc_len": 1024
     },
 	"HLA_A": {
         "fc1_len": 256,
