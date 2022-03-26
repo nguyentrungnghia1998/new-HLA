@@ -142,8 +142,8 @@ class Trainer:
                 output = self.model(data)
                 presize = 0
                 for name, output_size in self.model.outputs_size:
-                    allele_out = output[presize:presize + output_size].argsort()[-1]
-                    allele_target = target[presize:presize + output_size].cpu().numpy().argsort()[-1]
+                    allele_out = output[presize + output_size].argsort()[-1]
+                    allele_target = target[presize + output_size].cpu().numpy().argsort()[-1]
                     if allele_out == allele_target:
                         accuracies[name] += 1
                     val_losses[name] += self.model.loss(T.FloatTensor(output[presize:presize + output_size]).to(self.device), 
