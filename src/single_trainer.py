@@ -96,7 +96,8 @@ class Trainer:
         self.model._train() # model to train mode, using batch norm and dropout
         
         for iter in range(self.epochs):
-            train_batches = self.transform_dataset(self.train_loader, mode='train', batch_size=self.batch_size, shuffle=True)
+            train_batches = self.transform_dataset(self.train_loader, mode='train', 
+                                                   batch_size=self.batch_size, shuffle=True)
             t = tqdm(train_batches, desc="Epochs {}".format(iter))              # Khai báo 1 tiến trình tqdm cho từng batch 
             losses = 0
             for batch_idx, (inputs, targets) in enumerate(t):           # Quét vòng lặp đến tất cả dữ liệu trong batch hiện ta
@@ -141,12 +142,12 @@ class Trainer:
                 output = self.model.predict(data)
                 presize = 0
                 for name, output_size in self.model.outputs_size:
-                    allele_outs = output[presize:presize + output_size].argsort()[-2:][::-1]
-                    allele_target = target[presize:presize + output_size].cpu().numpy().argsort()[-2:][::-1]
-                    if ((allele_outs[0] == allele_target[0]) or \
-                        (allele_outs[0] == allele_target[1] and \
-                        target[presize:presize + output_size].cpu().numpy()[allele_target[1]]==1)):
+                    allele_out = output[presize:presize + output_size].argsort()[-1]
+                    allele_target = target[presize:presize + output_size].cpu().numpy().argsort()[-1]
+                    if allele_out == allele_target:
                         accuracies[name] += 1
-                    val_losses[name] += self.model.loss(T.FloatTensor(output[presize:presize + output_size]), T.FloatTensor(target[presize:presize + output_size])).item()
+                    val_losses[name] += self.model.loss(T.FloatTensor(output[presize:presize + output_size]), 
+                                                        T.FloatTensor(target[presize:presize + output_size])).item()
                     presize += output_size
-        return [np.round(acc / len(self.test_loader['data']) / 2, 2) for acc in accuracies.values()], np.mean(list(val_losses.values()))/(_iter+1)
+        return [np.round(acc / len(self.test_loader['data']), 2) for acc in accuracies.values()], \
+            np.mean(list(val_losses.values()))/(_iter+1)

@@ -7,10 +7,22 @@ from pipeline.trainning import trainning
 from pipeline.preprocess_data import pretrain
 
 '''
+<<<<<<< HEAD
 python3 main.py --pipeline pretrain,train2c --data-path 'input/consensus23.phased.HLA.bin' \
+=======
+<<<<<<< HEAD
+python3 main.py --pipeline pretrain,train-1,train-2 \
+    --data-path input/consensus23.phased.HLA.vcf.gz \
+        --index-path 'input/test.list' \
+            --label-path 'input/DGV4VN_1006.Kourami_result.nonsort.csv' \
+                --sample 10009 -l bce -o adam -k 10 -e 2 --lr 0.007 -b 64 --hla 'A' -e 10 -v
+=======
+python3 main.py --pipeline pretrain,train --data-path 'input/consensus23.phased.HLA.bin' \
+>>>>>>> 96c89e5f2bc02732bd0732cc8e4de793c5845761
     --index-path 'input/test.list' --label-path 'input/DGV4VN_1006.Kourami_result.nonsort.csv' \
     --sample 10009 --colapsed --model-name 'model.pt' --output-path 'output' \
     -l bce -o adam -k 10 -e 2 -lr 0.007 -b 64 -n 1 -p 5 -s 100 -d ./trainned_models -v
+>>>>>>> d7b334d18d81c61b5fb06ce1c37f593ace7e832e
 '''
 
 def parse_args():
@@ -56,7 +68,7 @@ def main():
                             nrows=args.sample,
                             saved=True)
         
-    if 'train' in pipelines:
+    if 'train-1' in pipelines:
         model = trainning(dataset_path=args.dataset_path,
                             dataset=dataset,
                             optimizer=args.optimizer,
@@ -76,6 +88,7 @@ def main():
                             dataset=dataset,
                             model=model, model_path=args.model_path)
         
+    if 'train-2' in pipelines:
         trainning(dataset_path=args.dataset_path,
                     dataset=dataset,
                     optimizer=args.optimizer,
@@ -83,6 +96,7 @@ def main():
                     num_folds=args.k_fold,
                     epochs=args.epochs,
                     lr=args.lr,
+                    use_cross_validation=args.use_cross_validation,
                     batch_size=args.batch_size,
                     n_repeats=args.n_repeats,
                     print_every=args.print_every,
