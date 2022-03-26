@@ -89,6 +89,10 @@ def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None,
     
     trainer.trainning_fold = False
     trainer.set_model(Model(dataset['input-size'], dataset['outputs-size']))
+<<<<<<< HEAD
+    trainer.hla_types = [out[0].replace('HLA', '') for out in trainer.model.outputs_size]
+=======
+>>>>>>> 51b65f66c4eb4cbe0eefbe0d83c37df3e9e6dc2f
     trainer.set_dataset(trainset, testset)
     trainer.train()
     trainer.model.save(path=trainer.model_path)

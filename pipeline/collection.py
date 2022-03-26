@@ -113,7 +113,7 @@ def collection(dataset_path=None,
                 
     save_to_bin(new_dataset, new_dataset['path'])
     print("Number of collection data: {}, ({}%)".format(len(new_dataset['data']),
-                                                        len(new_dataset['data'])/len(dataset['data'])*100))
+                                                        len(new_dataset['data'])/len(dataset[0])*100))
     return new_dataset 
             
             
