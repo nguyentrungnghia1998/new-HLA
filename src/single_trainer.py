@@ -139,15 +139,15 @@ class Trainer:
         with T.no_grad():		# Tắt gradient các tensor trong khối lệnh phía dưới 
             test_batches = self.transform_dataset(self.test_loader, mode='test')
             for _iter, (data, target) in enumerate(zip(test_batches[0], test_batches[1])):		# Lấy số vòng lặp, data và target lần lượt trong tqdm
-                output = self.model.predict(data)
+                output = self.model(data)
                 presize = 0
                 for name, output_size in self.model.outputs_size:
-                    allele_out = output[presize:presize + output_size].argsort()[-1]
-                    allele_target = target[presize:presize + output_size].cpu().numpy().argsort()[-1]
+                    allele_out = output[presize + output_size].argsort()[-1]
+                    allele_target = target[presize + output_size].cpu().numpy().argsort()[-1]
                     if allele_out == allele_target:
                         accuracies[name] += 1
-                    val_losses[name] += self.model.loss(T.FloatTensor(output[presize:presize + output_size]), 
-                                                        T.FloatTensor(target[presize:presize + output_size])).item()
+                    val_losses[name] += self.model.loss(T.FloatTensor(output[presize:presize + output_size]).to(self.device), 
+                                                        T.FloatTensor(target[presize:presize + output_size]).to(self.devide)).item()
                     presize += output_size
         return [np.round(acc / len(self.test_loader['data']), 2) for acc in accuracies.values()], \
             np.mean(list(val_losses.values()))/(_iter+1)
