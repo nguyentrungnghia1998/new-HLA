@@ -149,5 +149,6 @@ class Trainer:
                     val_losses[name] += self.model.loss(output[presize:presize + output_size], 
                                                         target[presize:presize + output_size]).item()
                     presize += output_size
+        
         return [np.round(acc / len(self.test_loader['data']), 2) for acc in accuracies.values()], \
             np.mean(list(val_losses.values()))/(_iter+1)

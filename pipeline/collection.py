@@ -69,15 +69,14 @@ def collection(dataset_path=None,
     with T.no_grad():       # Tắt gradient các tensor trong khối lệnh phía dưới 
         dataset = transform_dataset(dataset)
         for idx, (inputs, targets) in enumerate(zip(dataset[0], dataset[1])):
-            outputs = model(inputs.detach()).cpu().numpy()
+            X1_outputs = model(inputs[0][0], inputs[0][1]).flatten().cpu().numpy()
+            X2_outputs = model(inputs[1][0], inputs[1][1]).flatten().cpu().numpy()
             presize = 0
-            out_0 = outputs[0]
-            out_1 = outputs[1]
             allele_targets = []
             is_candidate = True
             for name, output_size in model.outputs_size:
-                allele_out_0 = out_0[presize:presize + output_size].argsort()[-1]
-                allele_out_1 = out_1[presize:presize + output_size].argsort()[-1]
+                allele_out_0 = X1_outputs[presize:presize + output_size].argsort()[-1]
+                allele_out_1 = X2_outputs[presize:presize + output_size].argsort()[-1]
                 allele_targets_index = targets[0][presize:presize + output_size]
                 allele_targets = allele_targets_index.argsort().cpu().numpy()[-2:][::-1]
                 

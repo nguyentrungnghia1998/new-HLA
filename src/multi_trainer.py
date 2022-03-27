@@ -74,28 +74,36 @@ class Trainer:
                 dataset = shuffle_data(dataset)         # Nếu gọi biến shuffle thì trộn bộ dữ liệu đã cho
             batches = []
             for i in range(0, len(dataset['data']), batch_size):
-                input_batch = dataset['data'][i:i + batch_size]
+                input_batch_1 = [x[0] for x in dataset['data'][i:i + batch_size]] # Allele 1
+                input_batch_2 = [x[1] for x in dataset['data'][i:i + batch_size]] # Allele 2
                 target_batch = dataset['label'][i:i + batch_size]
-                T_input_batch = Variable(T.FloatTensor(np.array(input_batch)\
+                T_input_batch_1 = Variable(T.FloatTensor(np.array(input_batch_1)\
+                    .astype(np.float64)).to(self.device), requires_grad=True)
+                T_input_batch_2 = Variable(T.FloatTensor(np.array(input_batch_2)\
                     .astype(np.float64)).to(self.device), requires_grad=True)
                 T_target_batch = Variable(T.FloatTensor(np.array(target_batch)\
-                    .astype(np.float64)).to(self.device), requires_grad=True)
-                batches.append((T_input_batch, T_target_batch))
+                    .astype(np.float64)).to(self.device))
+                batches.append(((T_input_batch_1, T_input_batch_2), T_target_batch))
             return batches
         elif mode == 'test':
             inputs = []
             targets = []
             for i in range(len(dataset['data'])):
                 row = dataset['data'][i]
-                row_1 = [row[0], row[0]]
-                row_2 = [row[1], row[1]]
+                row_1 = [Variable(T.FloatTensor(np.array(row[0]).astype(np.float64)).\
+                            to(self.device), requires_grad=False).detach(), 
+                         Variable(T.FloatTensor(np.array(row[0]).astype(np.float64)).\
+                            to(self.device), requires_grad=False).detach()]
+                row_2 = [Variable(T.FloatTensor(np.array(row[1]).astype(np.float64)).\
+                            to(self.device), requires_grad=False).detach(),
+                         Variable(T.FloatTensor(np.array(row[1]).astype(np.float64)).\
+                            to(self.device), requires_grad=False).detach()]
                 inputs.append([row_1, row_2])
-                targets.append(dataset['label'][i])
+                targets.append(Variable(T.FloatTensor(np.array(dataset['label'][i]).astype(np.float64)).\
+                    to(self.device), requires_grad=False))
                 
-            T_input_batch = Variable(T.FloatTensor(np.array(inputs)\
-                .astype(np.float64)).to(self.device), requires_grad=False)
-            T_target_batch = Variable(T.FloatTensor(np.array(targets)\
-                .astype(np.float64)).to(self.device), requires_grad=False)
+            T_input_batch = inputs
+            T_target_batch = targets
                 
             return (T_input_batch, T_target_batch)
     
@@ -114,7 +122,8 @@ class Trainer:
             losses = 0
             for batch_idx, (inputs, targets) in enumerate(t):           # Quét vòng lặp đến tất cả dữ liệu trong batch hiện ta
                 self.model.reset_grad()
-                output = self.model(inputs)
+                X1, X2 = inputs
+                output = self.model(X1, X2)
                 loss = self.model.loss(output, targets.detach())                # Tính hàm loss giữa đầu ra output và targets
                 loss.backward()
                 self.model.step()               # Cập nhật tham số mạng nơ ron ở cuối mô hình 
@@ -152,38 +161,36 @@ class Trainer:
         with T.no_grad():		# Tắt gradient các tensor trong khối lệnh phía dưới 
             test_batches = self.transform_dataset(self.test_loader, mode='test')
             for _iter, (inputs, target) in enumerate(zip(test_batches[0], test_batches[1])):
-                outputs = self.model(inputs.detach()).cpu().numpy()
-                original_input = T.stack((inputs[0][0], inputs[1][0]))
-                original_output = self.model.predict(original_input)
+                X1_outputs = self.model(inputs[0][0], inputs[0][1]).flatten().cpu().numpy()
+                X2_outputs = self.model(inputs[1][0], inputs[1][1]).flatten().cpu().numpy()
+                original_output = self.model(inputs[0][0], inputs[1][0]).flatten()
                 presize = 0
-                out_0 = outputs[0]
-                out_1 = outputs[1]
                 for name, output_size in self.model.outputs_size:
-                    allele_out_idx_0 = out_0[presize:presize + output_size].argsort()[-1]
-                    allele_out_idx_1 = out_1[presize:presize + output_size].argsort()[-1]
+                    out_0 = X1_outputs[presize:presize + output_size].argsort()[-1]
+                    out_1 = X2_outputs[presize:presize + output_size].argsort()[-1]
                     allele_target = target[presize:presize + output_size]
-                    allele_target_ids = allele_target.argsort().cpu().numpy()[-2:][::-1]
+                    original_allele_out = original_output[presize:presize + output_size]
+                    labels = allele_target.argsort().cpu().numpy()[-2:][::-1]
+                    label_0, label_1, = labels
+                    val_losses[name] += self.model.loss(allele_target, original_allele_out).item()
                     
-                    val_losses[name] += self.model.loss(target[presize:presize + output_size], 
-                                                        original_output[presize:presize + output_size]).item()
-                    
-                    if allele_target[allele_target_ids[1]] == 0:
-                        allele_target_ids[1] = allele_target_ids[0]
+                    if allele_target[label_1] == 0:
+                        label_1 = label_0
                         
-                    if allele_out_idx_0 not in allele_target_ids or \
-                            allele_out_idx_1 not in allele_target_ids:
+                    if out_0 not in labels or \
+                            out_1 not in labels:
                         presize += output_size
                         break
-                    if allele_target_ids[0] != allele_target_ids[1] and \
-                        allele_out_idx_0 == allele_out_idx_1:
+                    if label_0 != label_1 and \
+                        out_0 == out_1:
                         presize += output_size
                         break
-                    if allele_target_ids[0] != allele_target_ids[1]:
-                        if allele_out_idx_0 != allele_out_idx_1:
+                    if label_0 != label_1:
+                        if out_0 != out_1:
                             accuracies[name] += 1
                     else:
-                        if allele_out_idx_0 == allele_out_idx_1 and \
-                            allele_out_idx_0 == allele_target_ids[0]:
+                        if out_0 == out_1 and \
+                            out_0 == label_0:
                             accuracies[name] += 1
                         
                     presize += output_size

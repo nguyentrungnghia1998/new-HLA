@@ -14,9 +14,9 @@ python3 main.py --pipeline pretrain,train-1,train-2 \
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pipeline', type=str, default='pretrain,train')
+    parser.add_argument('--pipeline', type=str, default='pretrain,train-1')
     parser.add_argument('--data-path', type=str, default='input/consensus23.phased.HLA.vcf.gz')
-    parser.add_argument('--dataset-path', type=str, default='input/consensus23.phased.HLA.2C.A.bin')
+    parser.add_argument('--dataset-path', type=str, default='input/consensus23.phased.HLA.vcf.gz')
     parser.add_argument('--index-path', type=str, default='input/test.list')
     parser.add_argument('--label-path', type=str, default='input/DGV4VN_1006.Kourami_result.nonsort.csv')
     parser.add_argument('--sample', type=int, default=5009)
