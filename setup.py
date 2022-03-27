@@ -7,7 +7,7 @@ here = pathlib.Path(__file__).parent.resolve()
 long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup (
-    name = 'HLA allele prediction tool',
+    name = 'HLA tool',
     version = '0.1',
     description = 'A tool for predicting HLA alleles',
     long_description = long_description,
@@ -15,9 +15,10 @@ setup (
     author = 'Vu Quoc Hien',
     author_email = 'v.hienvq1@vinbigdata.org',
     url = 'https://bitbucket.org/Hienvq2304/deep_hla',
-    packages=["src", "pipelines"],
+    packages=["src", "pipelines", "models", "objects"],
     keywords='hla, deep learning, allele prediction',
     install_requires=[
+        'cyvcf2==0.30.14',
         'matplotlib==3.5.1',
         'numpy==1.21.2',
         'pandas==1.3.3',

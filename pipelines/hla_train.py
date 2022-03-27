@@ -5,7 +5,7 @@ from src.preprocess_data import pretrain
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pretrain', action='store_true', default=True,
+    parser.add_argument('--pretrain', action='store_true',
                         help='pretrain model, preprocess data')
     parser.add_argument('--trainning', action='store_true',
                         help='trainning model')
@@ -70,14 +70,14 @@ def main():
                             epochs=args.epochs,
                             lr=args.lr,
                             batch_size=args.batch_size,
-                            save_dir=args.save_dir,
+                            save_dir=args.model_save_dir,
                             output_path=args.output_path,
                             verbose=args.verbose)
         
         ''' collect single column data and label using the trained model '''
         dataset = collection(dataset_path=args.dataset_path,
                             dataset=dataset,
-                            model=model, model_path=args.model_path)
+                            model=model)
         
         ''' trainning model (single column input) '''
         trainning(dataset_path=args.dataset_path,
@@ -89,7 +89,7 @@ def main():
                     lr=args.lr,
                     use_cross_validation=args.use_cross_validation,
                     batch_size=args.batch_size,
-                    save_dir=args.save_dir,
+                    save_dir=args.model_save_dir,
                     output_path=args.output_path,
                     verbose=args.verbose)
     
