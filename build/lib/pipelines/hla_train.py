@@ -1,52 +1,54 @@
-
 import argparse
-from pipeline.collection import collection
-from pipeline.trainning import trainning
-from pipeline.preprocess_data import pretrain
-
-'''
-python3 main.py --pipeline pretrain,train-1,train-2 \
-    --data-path input/consensus23.phased.HLA.vcf.gz \
-        --index-path 'input/test.list' \
-            --label-path 'input/DGV4VN_1006.Kourami_result.nonsort.csv' \
-                --sample 10009 -l bce -o adam -k 10 -e 2 --lr 0.007 -b 64 --hla 'A' -e 10 -v
-'''
+from src.collection import collection
+from src.trainning import trainning
+from src.preprocess_data import pretrain
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pipeline', type=str, default='pretrain,train-1')
-    parser.add_argument('--data-path', type=str, default='input/consensus23.phased.HLA.vcf.gz')
-    parser.add_argument('--dataset-path', type=str, default='input/consensus23.phased.HLA.vcf.gz')
-    parser.add_argument('--index-path', type=str, default='input/test.list')
-    parser.add_argument('--label-path', type=str, default='input/DGV4VN_1006.Kourami_result.nonsort.csv')
-    parser.add_argument('--sample', type=int, default=5009)
-    parser.add_argument('--colapsed', action='store_true')
+    parser.add_argument('--pretrain', action='store_true',
+                        help='pretrain model, preprocess data')
+    parser.add_argument('--trainning', action='store_true',
+                        help='trainning model')
+    parser.add_argument('--dataset-path', type=str, default=None,
+                        help='path to dataset')
+    parser.add_argument('--index-path', type=str, default=None, 
+                        help='path to index file')
+    parser.add_argument('--label-path', type=str, default=None,
+                        help='path to label file')
+    parser.add_argument('--sample', type=int, default=101506,
+                        help='number of samples to use')
     parser.add_argument('--hla-types', type=str, default='A',
                         help='comma separated list of hla alleles to be used for training, \
                         e.g. A,B,C,DQA1,DQB1,DRB1,DPB1')
-    parser.add_argument('--model-path', type=str, default='./trainned_models/multi_train/SharedNet2C/SharedNet2C_model.pt')
     parser.add_argument('--output-path', type=str, default='output')
-    parser.add_argument('-l', '--loss', type=str, default='bce')
-    parser.add_argument('-o', '--optimizer', type=str, default='adam')
+    parser.add_argument('-l', '--loss', type=str, default='bce',
+                        help='loss function to use')
+    parser.add_argument('-o', '--optimizer', type=str, default='adam',
+                        help='optimizer to use')
     parser.add_argument('--use_cross_validation', action='store_true')
-    parser.add_argument('-k', '--k-fold', type=int, default=2)
-    parser.add_argument('-e', '--epochs', type=int, default=1)
-    parser.add_argument('--lr', type=float, default=0.005)
-    parser.add_argument('-b', '--batch-size', type=int, default=64)
-    parser.add_argument('-r', '--n-repeats', type=int, default=1)
-    parser.add_argument('-p', '--print-every', type=int, default=5)
-    parser.add_argument('-s', '--save-every', type=int, default=100)
-    parser.add_argument('-d', '--save-dir', type=str, default='./trainned_models')
-    parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument('-k', '--k-fold', type=int, default=10,
+                        help='number of folds to use for cross validation')
+    parser.add_argument('-e', '--epochs', type=int, default=10,
+                        help='number of epochs to train')
+    parser.add_argument('--lr', type=float, default=0.001,  
+                        help='learning rate')
+    parser.add_argument('-b', '--batch-size', type=int, default=64,
+                        help='batch size')
+    parser.add_argument('-d', '--model-save-dir', type=str, 
+                        default='./trainned_models',
+                        help='directory to save model')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='verbose mode')
     args = parser.parse_args() 
     return args
 
 def main():
     args = parse_args()
-    pipelines = args.pipeline.split(',')
     dataset = None
     model = None
-    if 'pretrain' in pipelines:
+    
+    ''' preprocess data '''
+    if args.pretrain:
         dataset = pretrain( data_path=args.data_path, 
                             index_path=args.index_path, 
                             label_path=args.label_path,
@@ -55,7 +57,8 @@ def main():
                             nrows=args.sample,
                             saved=True)
         
-    if 'train-1' in pipelines:
+    ''' trainning model (two column input)'''
+    if args.trainning:
         model = trainning(dataset_path=args.dataset_path,
                             dataset=dataset,
                             optimizer=args.optimizer,
@@ -72,11 +75,12 @@ def main():
                             output_path=args.output_path,
                             verbose=args.verbose)
         
+        ''' collect single column data and label using the trained model '''
         dataset = collection(dataset_path=args.dataset_path,
                             dataset=dataset,
                             model=model, model_path=args.model_path)
         
-    if 'train-2' in pipelines:
+        ''' trainning model (single column input) '''
         trainning(dataset_path=args.dataset_path,
                     dataset=dataset,
                     optimizer=args.optimizer,
