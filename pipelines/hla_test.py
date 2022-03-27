@@ -92,6 +92,5 @@ def main():
                     save_dir=args.save_dir,
                     output_path=args.output_path,
                     verbose=args.verbose)
-    
 if __name__ == '__main__':
     main()
