@@ -1,4 +1,0 @@
-[console_scripts]
-hla-tool = pipelines.hla_tool:main
-hla-train = pipelines.hla_train:main
-
