@@ -49,27 +49,34 @@ class SharedNet2C(nn.Module):
         fc_len = config['HLA_Shared']["fc_len"]
         self.p_dropout = config['HLA_Shared']["p_dropout"]
         w_size = config['HLA_Shared']["w_size"]
-        self.linear_input = ((((input_size[1] - conv1_kernel_size) // w_size + 1) // max_pool_size - conv2_kernel_size) // w_size + 1) // 2		# Số đầu vào của lớp fully connected
+        self.linear_input = ((((input_size[1] - conv1_kernel_size) // w_size + 1) // max_pool_size - conv2_kernel_size) // w_size + 1)		# Số đầu vào của lớp fully connected
         self.relu = nn.ReLU().to(self.device)
         self.pool1 = nn.MaxPool1d(2, stride=max_pool_size).to(self.device)
         self.pool2 = nn.MaxPool1d(2, stride=max_pool_size).to(self.device)
-        self.conv1 = nn.Conv2d(1, conv1_num_filter, kernel_size=(2, conv1_kernel_size), stride=w_size).to(self.device)		# 2 lớp tích chập
+        self.conv1 = nn.Conv1d(1, conv1_num_filter, kernel_size=conv1_kernel_size, stride=w_size).to(self.device)		# 2 lớp tích chập
         self.conv2 = nn.Conv1d(conv1_num_filter, conv2_num_filter, kernel_size=conv2_kernel_size, stride=w_size).to(self.device)
-        self.bn1 = nn.BatchNorm2d(conv1_num_filter).to(self.device)
+        self.bn1 = nn.BatchNorm1d(conv1_num_filter).to(self.device)
         self.bn2 = nn.BatchNorm1d(conv2_num_filter).to(self.device)
-        self.fc = nn.Linear(conv2_num_filter * self.linear_input, fc_len).to(self.device)
+        self.fc = nn.Linear(2 * conv2_num_filter * self.linear_input, fc_len).to(self.device)
         self.fc_len = fc_len		# Lớp tuyến tính cuối cùng
         self.fc_bn = nn.BatchNorm1d(fc_len).to(self.device)
         self.HLA_layers = [PrivatedNet(name, fc_len, output_size) 
                            for name, output_size in outputs_size]
         
-    def forward(self, x):
-        x = x.reshape(-1, 1, self.input_size[0], self.input_size[1])		# Chuyển đầu vào thành dạng 3D numpy array
-        out = F.relu(self.bn1(self.conv1(x)))		
-        out = out.reshape(-1, out.size()[1], out.size()[3])		# Chuyển đầu vào thành dạng 3D numpy array
-        out = self.pool1(out)
-        out = F.relu(self.bn2(self.conv2(out)))
-        out = self.pool2(out)
+    def forward(self, X1, X2):
+        x1 = X1.reshape(-1, 1, self.input_size[1])
+        x2 = X2.reshape(-1, 1, self.input_size[1])
+        out_1 = self.relu(self.bn1(self.conv1(x1)))
+        out_1 = self.pool1(out_1)
+        out_1 = self.relu(self.bn2(self.conv2(out_1)))
+        # out_1 = self.pool2(out_1)
+        out_1 = out_1.reshape(-1, self.linear_input * self.conv2.out_channels)
+        out_2 = self.relu(self.bn1(self.conv1(x2)))
+        out_2 = self.pool1(out_2)
+        out_2 = self.relu(self.bn2(self.conv2(out_2)))
+        # out_2 = self.pool2(out_2)
+        out_2 = out_2.reshape(-1, self.linear_input * self.conv2.out_channels)
+        out = torch.cat((out_1, out_2), 1)
         out = out.view(out.size()[0], -1)		# Chuyển đầu ra về dạng vecto 2 chiều, flatten 2 chiều còn lại 
         out = F.dropout(F.relu(self.fc_bn(self.fc(out))), p=self.p_dropout, training=self.training)
         outs = [HLA.forward(out) for HLA in self.HLA_layers]		# Tính các đầu ra ứng với mỗi mạng HLA con 

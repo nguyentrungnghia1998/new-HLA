@@ -8,13 +8,12 @@ from src.data_helper import *
 from models.SharedNet1C import SharedNet1C
 from sklearn.model_selection import StratifiedKFold
 from src.visualize import *
-from src.single_trainer import Trainer as SingleTrainer
-from src.multi_trainer import Trainer as MultiTrainer
+from objects.single_trainer import Trainer as SingleTrainer
+from objects.multi_trainer import Trainer as MultiTrainer
 
 def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None, 
-             epochs=False, lr=None, batch_size=True, use_cross_validation=True, 
+             epochs=False, lr=None, batch_size=None, use_cross_validation=True, 
              num_folds=None, split_ratio=0.9,
-             n_repeats=1, print_every=100, save_every=100,
              output_path=None, save_dir=None, verbose=False):
     
     if dataset is None:
@@ -44,11 +43,8 @@ def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None,
         loss=loss,
         optimizer=optimizer,
         epochs=epochs,
-        lr=lr,
         batch_size=batch_size,
-        n_repeats=n_repeats,
-        print_every=print_every,
-        save_every=save_every,
+        lr=lr,
         save_dir=save_dir,
         verbose=verbose
         )

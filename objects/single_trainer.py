@@ -13,7 +13,6 @@ from src.data_helper import shuffle_data
 class Trainer:
     def __init__(self, model=None, loss='bce', optimizer='adam', train_loader=None, test_loader=None, fold=1,
                  device=None, lr=0.0005, epochs=200, batch_size=64,
-                 n_repeats = 2, print_every=1, save_every=500,
                  save_dir="./trainned_models",
                  save_name="model.pt", verbose=True):
         self.model = model
@@ -26,9 +25,6 @@ class Trainer:
         self.device = T.device("cuda" if T.cuda.is_available() else "cpu")
         self.epochs = epochs
         self.batch_size = batch_size
-        self.n_repeats = n_repeats              # Số lần lặp lại quá trình học
-        self.print_every = print_every
-        self.save_every = save_every            # Số bước tuần hoàn thực hiện in kết quả và lưu mô hình
         self.save_dir = save_dir
         self.save_name = save_name
         self.verbose = verbose          # Chọn cách thức hiển thị kết quả sau mỗi vòng lặp 
@@ -61,7 +57,7 @@ class Trainer:
     def set_dataset(self, train_loader, test_loader):
         self.train_loader = train_loader
         self.test_loader = test_loader
-    
+        
     def transform_dataset(self, dataset, mode='train', batch_size=64, shuffle=True):
         """
         Transform dataset to batchs
@@ -83,33 +79,21 @@ class Trainer:
                 batches.append((T_input_batch, T_target_batch))
             return batches
         elif mode == 'test':
-            inputs = []
-            targets = []
-            for i in range(len(dataset['data'])):
-                row = dataset['data'][i]
-                row_1 = [row[0], row[0]]
-                row_2 = [row[1], row[1]]
-                inputs.append([row_1, row_2])
-                targets.append(dataset['label'][i])
-                
-            T_input_batch = Variable(T.FloatTensor(np.array(inputs)\
+            T_inputs = Variable(T.FloatTensor(np.array(dataset['data'])\
                 .astype(np.float64)).to(self.device), requires_grad=False)
-            T_target_batch = Variable(T.FloatTensor(np.array(targets)\
+            T_targets = Variable(T.FloatTensor(np.array(dataset['label'])\
                 .astype(np.float64)).to(self.device), requires_grad=False)
-                
-            return (T_input_batch, T_target_batch)
+            return T_inputs, T_targets
     
     def train(self):
-        self.train_losses=[]
-        self.val_losses=[]
-        self.val_accuracy=[]
         if len(self.train_loader['data']) == 0:
             raise Exception('Train dataset is empty')
         
         self.model._train() # model to train mode, using batch norm and dropout
         
         for iter in range(self.epochs):
-            train_batches = self.transform_dataset(self.train_loader, mode='train', batch_size=self.batch_size, shuffle=True)
+            train_batches = self.transform_dataset(self.train_loader, mode='train', 
+                                                   batch_size=self.batch_size, shuffle=True)
             t = tqdm(train_batches, desc="Epochs {}".format(iter))              # Khai báo 1 tiến trình tqdm cho từng batch 
             losses = 0
             for batch_idx, (inputs, targets) in enumerate(t):           # Quét vòng lặp đến tất cả dữ liệu trong batch hiện ta
@@ -134,58 +118,33 @@ class Trainer:
             self.val_accuracy.append(val_acc)
             
             save_train_val_losses(self.train_losses, self.val_losses, self.trainning_fold, fold=self.fold,
-                            model_name=self.model.name,data_type="Multi_Trainer",hla_types=self.hla_types)
+                            model_name=self.model.name,data_type="Single_Trainer",hla_types=self.hla_types)
             save_val_acc(self.train_losses, self.val_accuracy, self.trainning_fold, fold=self.fold,
-                           model_name=self.model.name,data_type="Multi_Trainer",hla_types=self.hla_types)
+                           model_name=self.model.name,data_type="Single_Trainer",hla_types=self.hla_types)
         
     def test(self):
         if len(self.test_loader['data']) == 0:
-            raise Exception('Test dataset is empty')
-        
-        self.model._eval() # model to eval mode, not using batch norm and dropout
+            print('Skipping test')
+        self.model._eval()
         accuracies = {}
         val_losses = {}
         for name, output_size in self.model.outputs_size:		# Quét vòng for đến tất cả các HLA và số output tương ứng
             accuracies[name] = 0
             val_losses[name] = 0
-        
+            
         with T.no_grad():		# Tắt gradient các tensor trong khối lệnh phía dưới 
             test_batches = self.transform_dataset(self.test_loader, mode='test')
-            for _iter, (inputs, target) in enumerate(zip(test_batches[0], test_batches[1])):
-                outputs = self.model(inputs.detach()).cpu().numpy()
-                original_input = T.stack((inputs[0][0], inputs[1][0]))
-                original_output = self.model.predict(original_input)
+            for _iter, (data, target) in enumerate(zip(test_batches[0], test_batches[1])):		# Lấy số vòng lặp, data và target lần lượt trong tqdm
+                output = self.model(data).flatten(0)
                 presize = 0
-                out_0 = outputs[0]
-                out_1 = outputs[1]
                 for name, output_size in self.model.outputs_size:
-                    allele_out_idx_0 = out_0[presize:presize + output_size].argsort()[-1]
-                    allele_out_idx_1 = out_1[presize:presize + output_size].argsort()[-1]
-                    allele_target = target[presize:presize + output_size]
-                    allele_target_ids = allele_target.argsort().cpu().numpy()[-2:][::-1]
-                    
-                    val_losses[name] += self.model.loss(target[presize:presize + output_size], 
-                                                        original_output[presize:presize + output_size]).item()
-                    
-                    if allele_target[allele_target_ids[1]] == 0:
-                        allele_target_ids[1] = allele_target_ids[0]
-                        
-                    if allele_out_idx_0 not in allele_target_ids or \
-                            allele_out_idx_1 not in allele_target_ids:
-                        presize += output_size
-                        break
-                    if allele_target_ids[0] != allele_target_ids[1] and \
-                        allele_out_idx_0 == allele_out_idx_1:
-                        presize += output_size
-                        break
-                    if allele_target_ids[0] != allele_target_ids[1]:
-                        if allele_out_idx_0 != allele_out_idx_1:
-                            accuracies[name] += 1
-                    else:
-                        if allele_out_idx_0 == allele_out_idx_1 and \
-                            allele_out_idx_0 == allele_target_ids[0]:
-                            accuracies[name] += 1
-                        
+                    allele_out = output[presize:presize + output_size].argsort()[-1]
+                    allele_target = target[presize:presize + output_size].argsort()[-1]
+                    if allele_out == allele_target:
+                        accuracies[name] += 1
+                    val_losses[name] += self.model.loss(output[presize:presize + output_size], 
+                                                        target[presize:presize + output_size]).item()
                     presize += output_size
-                        
-        return [np.round(acc / len(self.test_loader['data']), 2) for acc in accuracies.values()], np.mean(list(val_losses.values()))/(_iter+1)
+        
+        return [np.round(acc / len(self.test_loader['data']), 2) for acc in accuracies.values()], \
+            np.mean(list(val_losses.values()))/(_iter+1)

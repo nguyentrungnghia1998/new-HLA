@@ -1,7 +1,7 @@
 from src.data_helper import *
 
 def pretrain(data_path=None, index_path=None, label_path=None, 
-             hla_types=['A'],colapsed=False, nrows=None, saved=True):
+             hla_types=None, nrows=None, saved=True):
     
     ''' read vcf file and convert to csv format '''
     df = load_vcf_file(data_path, index_path=index_path, nrows=nrows, saved=False)
@@ -71,30 +71,19 @@ def pretrain(data_path=None, index_path=None, label_path=None,
     
     dataset_length = len(df) // 2
     
-    if colapsed:
-        for i in range(dataset_length):
-            data_row = np.logical_or(df.iloc[i].values, df.iloc[i + dataset_length].values)
-            label = np.logical_or(df_allele_labels['label'].iloc[i], 
-                                    df_allele_labels['label'].iloc[i + dataset_length]) * 1
-            dataset['data'].append(data_row)
-            dataset['label'].append(label)
-            
-        dataset['input-size'] = len(dataset['data'][0])
-        dataset['type'] = "1C"  
-    else:
-        for i in range(dataset_length):
-            data_row = np.concatenate(([df.iloc[i].values], [df.iloc[i + dataset_length].values]))
-            label = np.logical_or(df_allele_labels['label'].iloc[i], 
-                                    df_allele_labels['label'].iloc[i + dataset_length]) * 1
-            dataset['data'].append(data_row)
-            dataset['label'].append(label)
-            # swap two rows 0, 1
-            data_row = np.array([data_row[1], data_row[0]])
-            dataset['data'].append(data_row)
-            dataset['label'].append(label)
-            
-        dataset['input-size'] = (2, len(dataset['data'][0][0]))
-        dataset['type'] = "2C"   
+    for i in range(dataset_length):
+        data_row = np.concatenate(([df.iloc[i].values], [df.iloc[i + dataset_length].values]))
+        label = np.logical_or(df_allele_labels['label'].iloc[i], 
+                                df_allele_labels['label'].iloc[i + dataset_length]) * 1
+        dataset['data'].append(data_row)
+        dataset['label'].append(label)
+        # swap two rows 0, 1
+        data_row = np.array([data_row[1], data_row[0]])
+        dataset['data'].append(data_row)
+        dataset['label'].append(label)
+        
+    dataset['input-size'] = (2, len(dataset['data'][0][0]))
+    dataset['type'] = "2C"   
         
     dataset['columns'] = columns
     dataset['outputs-size'] = [['HLA_' + col, len(df_allele_labels[col].iloc[0])] for col in columns]
