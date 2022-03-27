@@ -121,10 +121,10 @@ class Trainer:
             self.val_losses.append(val_loss)
             self.val_accuracy.append(val_acc)
             
-            save_train_val_losses(self.train_losses, self.val_losses, fold=self.fold,
-                            model_name=self.model.name, hla_types=self.hla_types)
-            save_val_acc(self.train_losses, self.val_accuracy, fold=self.fold,
-                           model_name=self.model.name, hla_types=self.hla_types)
+            save_train_val_losses(self.train_losses, self.val_losses, self.trainning_fold, fold=self.fold,
+                            model_name=self.model.name,data_type="Single_Trainer",hla_types=self.hla_types)
+            save_val_acc(self.train_losses, self.val_accuracy, self.trainning_fold, fold=self.fold,
+                           model_name=self.model.name,data_type="Single_Trainer",hla_types=self.hla_types)
         
     def test(self):
         if len(self.test_loader['data']) == 0:
@@ -139,11 +139,11 @@ class Trainer:
         with T.no_grad():		# Tắt gradient các tensor trong khối lệnh phía dưới 
             test_batches = self.transform_dataset(self.test_loader, mode='test')
             for _iter, (data, target) in enumerate(zip(test_batches[0], test_batches[1])):		# Lấy số vòng lặp, data và target lần lượt trong tqdm
-                output = self.model.predict(data)
+                output = self.model(data).flatten(0)
                 presize = 0
                 for name, output_size in self.model.outputs_size:
                     allele_out = output[presize:presize + output_size].argsort()[-1]
-                    allele_target = target[presize:presize + output_size].cpu().numpy().argsort()[-1]
+                    allele_target = target[presize:presize + output_size].argsort()[-1]
                     if allele_out == allele_target:
                         accuracies[name] += 1
                     val_losses[name] += self.model.loss(output[presize:presize + output_size], 

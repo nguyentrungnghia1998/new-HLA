@@ -14,7 +14,7 @@ def save_train_losses(train_losses, iter, model_name, out_dir='output/train_loss
         plt.show()
     fig.savefig("{}/{}_{}".format(out_dir, model_name, 'train_losses_fold_'+str(iter)+'.png'))
     
-def save_train_val_losses(train_losses, val_losses, training_fold, fold, model_name, data_type,  hla_types, out_dir='output/train_losses', display=False):
+def save_train_val_losses(train_losses, val_losses, training_fold=None, fold=None, model_name=None, data_type=None,  hla_types=None, out_dir='output/train_losses', display=False):
     plt.plot(train_losses,"-b",  label="train_losses") 
     plt.plot(val_losses,"-r", label="valid_losses") 
     plt.legend(loc="upper right")
@@ -30,7 +30,7 @@ def save_train_val_losses(train_losses, val_losses, training_fold, fold, model_n
         plt.savefig("{}/{}".format(out_dir, 'train_valid_losses.png'))
     plt.close()
 
-def save_val_acc(train_losses, val_accuracy, training_fold, fold, model_name,data_type, hla_types, out_dir='output/train_losses', display=False):
+def save_val_acc(train_losses, val_accuracy, training_fold=None, fold=None, model_name=None,data_type=None, hla_types=None, out_dir='output/train_losses', display=False):
     name=hla_types
     np_accu=np.array(val_accuracy).T
     for j in range(len(name)):
