@@ -1,10 +1,12 @@
 from src.data_helper import *
 
 def pretrain(data_path=None, index_path=None, label_path=None, 
+             ref_pos_path=None, pos_path=None,
              hla_types=None, nrows=None, saved=True):
     
     ''' read vcf file and convert to csv format '''
-    df = load_vcf_file(data_path, index_path=index_path, nrows=nrows, saved=False)
+    df = load_vcf_file(data_path, index_path=index_path,ref_pos_path=ref_pos_path,
+                       nrows=nrows, saved=False)
     label_df_file_path = label_path
     label_df = pd.read_csv(label_df_file_path, index_col=0)
     label_df = label_df.set_index(np.array(['_'.join(x.split('_')[:4]) 

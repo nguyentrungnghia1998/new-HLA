@@ -4,7 +4,6 @@ matplotlib.use('AGG')
 import torch as T
 import numpy as np
 from torch.autograd import Variable             # Hàm khai báo các biến tensor và có thể thay đổi gradient của nó
-from matplotlib import pyplot as plt
 from tqdm import tqdm
 from src.visualize import *
 
