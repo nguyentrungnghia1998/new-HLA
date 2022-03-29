@@ -3,7 +3,6 @@
     Date created: 2022-03-14
 '''
 
-from tkinter import Variable
 import numpy as np
 import torch as T
 from src.data_helper import *
@@ -35,10 +34,7 @@ def transform_dataset(dataset):
             
         return (inputs, targets)
 
-def collection(dataset_path=None,
-                dataset=None,
-                model=None,
-                model_path=None):
+def collection(dataset_path=None, dataset=None, model=None, model_path=None, accept_threshold=0.5):
     if dataset is None:
         ''' load csv file '''
         dataset = load_from_bin(dataset_path)
@@ -53,7 +49,7 @@ def collection(dataset_path=None,
         if model_path is not None:
             model.load(path=model_path)
             
-    # model._eval()
+    model._eval()
     
     new_dataset = {
         'data': [],
@@ -65,7 +61,6 @@ def collection(dataset_path=None,
         'path': dataset['path'].replace('2C', 'co-1C')
     }
     
-    n_y_true = 0  
     with T.no_grad():       # Tắt gradient các tensor trong khối lệnh phía dưới 
         dataset = transform_dataset(dataset)
         for idx, (inputs, targets) in enumerate(zip(dataset[0], dataset[1])):
@@ -74,32 +69,47 @@ def collection(dataset_path=None,
             presize = 0
             allele_targets = []
             is_candidate = True
+            
             for name, output_size in model.outputs_size:
-                allele_out_0 = X1_outputs[presize:presize + output_size].argsort()[-1]
-                allele_out_1 = X2_outputs[presize:presize + output_size].argsort()[-1]
                 allele_targets_index = targets[0][presize:presize + output_size]
                 allele_targets = allele_targets_index.argsort().cpu().numpy()[-2:][::-1]
                 
                 if allele_targets_index[allele_targets[1]] == 0:
                     allele_targets[1] = allele_targets[0]
-                    
-                if allele_out_0 not in allele_targets or \
-                        allele_out_1 not in allele_targets:
+                
+                label_0, label_1 = allele_targets[0], allele_targets[1]
+                probs_outs = [[X1_outputs[presize + i] for i in allele_targets],
+                              [X2_outputs[presize + i] for i in allele_targets]]
+                
+                best_prob_1 = max(probs_outs[0])
+                best_prob_2 = max(probs_outs[1])
+                best_prob_idx_1 = np.argmax(probs_outs[0])
+                best_prob_idx_2 = np.argmax(probs_outs[1])
+                
+                if min(best_prob_1, best_prob_2) < accept_threshold:
                     is_candidate = False
-                    presize += output_size
                     break
-                if allele_targets[0] != allele_targets[1] and \
-                    allele_out_0 == allele_out_1:
-                    is_candidate = False
-                    presize += output_size
-                    break
-                if allele_targets[0] != allele_targets[1]:
-                    if allele_out_0 == allele_targets[0]:
-                        targets[0][presize + allele_targets[1]] = 0
-                        targets[1][presize + allele_targets[0]] = 0
+                
+                targets[0][presize + label_0] = 0
+                targets[0][presize + label_1] = 0
+                targets[1][presize + label_0] = 0
+                targets[1][presize + label_1] = 0
+                
+                if best_prob_1 > best_prob_2:
+                    if best_prob_idx_1 == 0:
+                        targets[0][presize + label_0] = 1
+                        targets[1][presize + label_1] = 1
                     else:
-                        targets[0][presize + allele_targets[0]] = 0
-                        targets[1][presize + allele_targets[1]] = 0
+                        targets[0][presize + label_1] = 1
+                        targets[1][presize + label_0] = 1
+                else:
+                    if best_prob_idx_2 == 0:
+                        targets[0][presize + label_1] = 1
+                        targets[1][presize + label_0] = 1
+                    else:
+                        targets[0][presize + label_0] = 1
+                        targets[1][presize + label_1] = 1
+                
                 presize += output_size
             
             if is_candidate:
@@ -112,7 +122,7 @@ def collection(dataset_path=None,
                 
     save_to_bin(new_dataset, new_dataset['path'])
     print("Number of collection data: {}, ({}%)".format(len(new_dataset['data']),
-                                                        len(new_dataset['data'])/len(dataset[0])*100))
+                                                        round(len(new_dataset['data'])/len(dataset[0])*100), 2))
     return new_dataset 
             
             

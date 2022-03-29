@@ -42,10 +42,10 @@ class Trainer:
         
     def set_model_path(self):
         if self.trainning_fold:
-            self.model_path = os.path.join(self.save_dir, 'multi_train', 
+            self.model_path = os.path.join(self.save_dir, 'single_train', 
                                            self.model.name + (''.join(self.hla_types)), 'fold_' + str(self.fold))
         else:
-            self.model_path = os.path.join(self.save_dir, 'multi_train', self.model.name + (''.join(self.hla_types)))
+            self.model_path = os.path.join(self.save_dir, 'single_train', self.model.name + (''.join(self.hla_types)))
         
     def set_model(self, model):
         self.model = model

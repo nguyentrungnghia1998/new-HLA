@@ -20,6 +20,7 @@ def parse_args():
                         help='path to label file')
     parser.add_argument('--sample', type=int, default=101506,
                         help='number of samples to use')
+    parser.add_argument('--accept_threshold', type=float, default=0.9')
     parser.add_argument('--hla-types', type=str, default='A',
                         help='comma separated list of hla alleles to be used for training, \
                         e.g. A,B,C,DQA1,DQB1,DRB1,DPB1')
@@ -77,7 +78,8 @@ def main():
         ''' collect single column data and label using the trained model '''
         dataset = collection(dataset_path=args.dataset_path,
                             dataset=dataset,
-                            model=model)
+                            model=model,
+                            accept_threshold=args.accept_threshold)
         
         ''' trainning model (single column input) '''
         trainning(dataset_path=args.dataset_path,
