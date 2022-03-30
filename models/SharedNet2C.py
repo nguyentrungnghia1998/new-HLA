@@ -162,13 +162,13 @@ class SharedNet2C(nn.Module):
         if not os.path.exists(path):		# Kiểm tra xem đường dẫn khai báo có tồn tại hay không
             os.makedirs(path)
         torch.save(self.state_dict(), "{}/{}.pt".format(path, model_name))
-        # print("Model saved")
+        print("Model saved at {}/{}.pt".format(path, model_name))
         
     def load(self, path=None):
         if path is None:
             raiseExceptions("Path is None")
             
-        self.load_state_dict(torch.load(path))
+        self.load_state_dict(torch.load(path, map_location=torch.device(self.device)))
         print('Model loaded from {}'.format(path))
 def main():
     model = SharedNet2C(input_size=(2, 101506), outputs_size=[('HLA_A', 42), ('HLA_B', 69), ('HLA_C', 41),

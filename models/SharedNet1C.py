@@ -135,13 +135,13 @@ class SharedNet1C(nn.Module):
         if not os.path.exists(path):		# Kiểm tra xem đường dẫn khai báo có tồn tại hay không
             os.makedirs(path)
         torch.save(self.state_dict(), "{}/{}.pt".format(path, model_name))
-        print("Model saved")
+        print("Model saved at {}/{}.pt".format(path, model_name))
         
-    def load(self, path='./trainned_model', model_name=None):
-        if model_name is None:
-            model_name = self.name + '_model'
-        self.load_state_dict(torch.load("{}/{}.pt".format(path, model_name)))		# Lấy lại model đã lưu trước đó
-        print("Model loaded")
+    def load(self, path=None):
+        if path is None:
+            raise ValueError("Path is not defined")
+        self.load_state_dict(torch.load(path, map_location=torch.device(self.device)))
+        print('Model loaded from {}'.format(path))
         
 def main():
     model = SharedNet1C(input_size=101506, outputs_size=[('HLA_A', 42), ('HLA_B', 69), ('HLA_C', 41),
