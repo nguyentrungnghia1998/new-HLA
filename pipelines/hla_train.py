@@ -67,7 +67,7 @@ def main():
                             dataset=dataset,
                             optimizer=args.optimizer,
                             loss=args.loss,
-                            use_cross_validation=args.use_cross_validation,
+                            use_cross_validation=False,
                             num_folds=args.k_fold,
                             epochs=args.epochs,
                             lr=args.lr,

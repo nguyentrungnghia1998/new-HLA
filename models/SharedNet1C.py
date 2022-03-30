@@ -28,7 +28,7 @@ class PrivatedNet(nn.Module):
         
     def forward(self, x):
         out = F.dropout(F.relu(self.bn1(self.fc1(x))), p=self.p_dropout, training=self.training)
-        # out = F.relu(self.bn2(self.fc2(out)))		# Thêm hàm relu để phi tuyến hóa kết quả sau lớp linear
+        out = F.relu(self.bn2(self.fc2(out)))		# Thêm hàm relu để phi tuyến hóa kết quả sau lớp linear
         out = self.fc3(out)
         return torch.softmax(out, dim=1)
     
