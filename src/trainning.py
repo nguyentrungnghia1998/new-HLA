@@ -31,7 +31,8 @@ def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None,
        raise ValueError("Wrong dataset type, 1C/2C is expected. Got {}".format(dataset['type']))
     
     if using_collection:
-        trainset, testset = dataset, dataset
+        trainset, testset = split_dataset(dataset, 1.0, shuffle=True)
+        testset = trainset
     else:
         trainset, testset = split_dataset(dataset, split_ratio, shuffle=True)
     
