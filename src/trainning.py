@@ -13,7 +13,7 @@ from objects.multi_trainer import Trainer as MultiTrainer
 
 def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None, 
              epochs=False, lr=None, batch_size=None, use_cross_validation=True, 
-             num_folds=None, split_ratio=0.9,
+             num_folds=None, split_ratio=0.9, using_collection=False,
              output_path=None, save_dir=None, verbose=False):
     
     if dataset is None:
@@ -29,8 +29,11 @@ def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None,
         Trainer = SingleTrainer
     else:
        raise ValueError("Wrong dataset type, 1C/2C is expected. Got {}".format(dataset['type']))
-   
-    trainset, testset = split_dataset(dataset, split_ratio, shuffle=True)
+    
+    if using_collection:
+        trainset, testset = dataset, dataset
+    else:
+        trainset, testset = split_dataset(dataset, split_ratio, shuffle=True)
     
     print('input_size: {}, output_size: {}'.format(dataset['input-size'], dataset['outputs-size']))
     

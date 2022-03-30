@@ -16,7 +16,9 @@ sudo apt-get install -y bcftools
 ```
 cd input/
 
-bcftools query -l consensus23.phased.HLA.vcf.gz | head -n 100 > consensus23.phased.HLA.list
+bcftools query -l consensus23.phased.HLA.vcf.gz | head -n 1020 > consensus23.phased.HLA.sample.list
+
+bcftools query -f '%POS\n' consensus23.phased.HLA.vcf.gz > consensus23.phased.HLA.position.list
 
 bcftools view -S test.list consensus23.phased.HLA.vcf.gz --force-samples  -Oz -o consensus23.phased.HLA.sample.vcf.gz
 ```

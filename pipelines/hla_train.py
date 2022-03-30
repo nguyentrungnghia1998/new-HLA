@@ -74,6 +74,7 @@ def main():
                             batch_size=args.batch_size,
                             save_dir=args.model_save_dir,
                             output_path=args.output_path,
+                            using_collection=True,
                             verbose=args.verbose)
         
         ''' collect single column data and label using the trained model '''
