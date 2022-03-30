@@ -13,13 +13,15 @@ def parse_args():
                         default='input/consensus23.phased.HLA.vcf.gz',
                         help='path to dataset')
     parser.add_argument('--index-path', type=str, # default=None, 
-                        default='input/test.list',
+                        default='input/consensus23.phased.HLA.sample.list',
                         help='path to index file')
     parser.add_argument('--label-path', type=str, # default=None,
                         default='input/DGV4VN_1006.Kourami_result.nonsort.csv',
                         help='path to label file')
     parser.add_argument('--sample', type=int, default=101506,
                         help='number of samples to use')
+    parser.add_argument('--accept-threshold', type=float, default=0.9,
+                        help='threshold to accept for extract single column data')
     parser.add_argument('--hla-types', type=str, default='A',
                         help='comma separated list of hla alleles to be used for training, \
                         e.g. A,B,C,DQA1,DQB1,DRB1,DPB1')
@@ -65,19 +67,21 @@ def main():
                             dataset=dataset,
                             optimizer=args.optimizer,
                             loss=args.loss,
-                            use_cross_validation=args.use_cross_validation,
+                            use_cross_validation=False,
                             num_folds=args.k_fold,
                             epochs=args.epochs,
                             lr=args.lr,
                             batch_size=args.batch_size,
                             save_dir=args.model_save_dir,
                             output_path=args.output_path,
+                            using_collection=True,
                             verbose=args.verbose)
         
         ''' collect single column data and label using the trained model '''
         dataset = collection(dataset_path=args.dataset_path,
                             dataset=dataset,
-                            model=model)
+                            model=model,
+                            accept_threshold=args.accept_threshold)
         
         ''' trainning model (single column input) '''
         trainning(dataset_path=args.dataset_path,
