@@ -19,15 +19,16 @@ class PrivatedNet(nn.Module):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         fc1_len = config[name]["fc1_len"]		# Tìm số lớp ẩn của lớp fully connected thứ 1 trong mạng độc lập
         fc2_len = config[name]["fc2_len"]		
+        self.p_dropout = config[name]["p_dropout"]	
         self.fc1 = nn.Linear(input_size, fc1_len).to(self.device)		# Khai báo lớp tuyến tính cho từng HLA riêng.S
         self.bn1 = nn.BatchNorm1d(fc1_len).to(self.device)
         self.fc2 = nn.Linear(fc1_len, fc2_len).to(self.device)
         self.bn2 = nn.BatchNorm1d(fc2_len).to(self.device)
-        self.fc3 = nn.Linear(fc1_len, output_size).to(self.device)
+        self.fc3 = nn.Linear(fc2_len, output_size).to(self.device)
         
     def forward(self, x):
-        out = F.relu(self.bn1(self.fc1(x)))
-        # out = F.relu(self.bn2(self.fc2(out)))		# Thêm hàm relu để phi tuyến hóa kết quả sau lớp linear
+        out = F.dropout(F.relu(self.bn1(self.fc1(x))), p=self.p_dropout, training=self.training)
+        out = F.relu(self.bn2(self.fc2(out)))		# Thêm hàm relu để phi tuyến hóa kết quả sau lớp linear
         out = self.fc3(out)
         return torch.softmax(out, dim=1)
     

@@ -13,7 +13,7 @@ from objects.multi_trainer import Trainer as MultiTrainer
 
 def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None, 
              epochs=False, lr=None, batch_size=None, use_cross_validation=True, 
-             num_folds=None, split_ratio=0.9,
+             num_folds=None, split_ratio=0.9, using_collection=False,
              output_path=None, save_dir=None, verbose=False):
     
     if dataset is None:
@@ -29,10 +29,15 @@ def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None,
         Trainer = SingleTrainer
     else:
        raise ValueError("Wrong dataset type, 1C/2C is expected. Got {}".format(dataset['type']))
-   
-    trainset, testset = split_dataset(dataset, split_ratio, shuffle=True)
+    
+    if using_collection:
+        trainset, testset = split_dataset(dataset, 1.0, shuffle=True)
+        testset = trainset
+    else:
+        trainset, testset = split_dataset(dataset, split_ratio, shuffle=True)
     
     print('input_size: {}, output_size: {}'.format(dataset['input-size'], dataset['outputs-size']))
+    print('train_size: {}, test_size: {}'.format(len(trainset['data']), len(testset['data'])))
     
     kfold = StratifiedKFold(n_splits=num_folds, shuffle=True, random_state=42)
 
@@ -66,14 +71,13 @@ def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None,
             valset_kfold['label'] = trainset['label'][val_idx]
 
             trainer.set_model(Model(dataset['input-size'], dataset['outputs-size']))
-            trainer.hla_types = [out[0].replace('HLA', '') for out in trainer.model.outputs_size]
             trainer.set_dataset(trainset_kfold, valset_kfold)
             trainer.fold = fold
             trainer.train()
 
             save_acc(output_path, trainer.val_accuracy[-1], "Accuracy of fold " + str(fold) +": ")
             accuracy_folds.append(trainer.val_accuracy[-1])
-            fold +=1
+            fold += 1
             
         print('-----------------------------------------------------')
         print("\nAverage accuracy:  ", np.mean(accuracy_folds, axis=0))
@@ -85,7 +89,6 @@ def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None,
     
     trainer.trainning_fold = False
     trainer.set_model(Model(dataset['input-size'], dataset['outputs-size']))
-    trainer.hla_types = [out[0].replace('HLA', '') for out in trainer.model.outputs_size]
     trainer.set_dataset(trainset, testset)
     trainer.train()
     trainer.model.save(path=trainer.model_path)

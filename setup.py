@@ -26,7 +26,8 @@ setup (
         'tqdm==4.62.3',
         'torchsummary==1.5.1',
         'scikit-learn==1.0.2',
-        'seaborn==0.11.2'
+        'seaborn==0.11.2',
+        'fuc==0.31.0'
     ],
     python_requires='>=3.6',
     entry_points={

@@ -11,34 +11,42 @@
     },
 	"HLA_A": {
         "fc1_len": 256,
-        "fc2_len": 128
+        "fc2_len": 128,
+        "p_dropout": 0.3
     },
     "HLA_B": {
         "fc1_len": 256,
-        "fc2_len": 128
+        "fc2_len": 128,
+        "p_dropout": 0.3
     },
     "HLA_C": {
         "fc1_len": 256,
-        "fc2_len": 128
+        "fc2_len": 128,
+        "p_dropout": 0.3
     },
     "HLA_DRB1": {
         "fc1_len": 256,
-        "fc2_len": 128
+        "fc2_len": 128,
+        "p_dropout": 0.3
     },
     "HLA_DQA1": {
         "fc1_len": 256,
-        "fc2_len": 128
+        "fc2_len": 128,
+        "p_dropout": 0.3
     },
     "HLA_DQB1": {
         "fc1_len": 256,
-        "fc2_len": 128
+        "fc2_len": 128,
+        "p_dropout": 0.3
     },
     "HLA_DPA1": {
         "fc1_len": 256,
-        "fc2_len": 128
+        "fc2_len": 128,
+        "p_dropout": 0.3
     },
     "HLA_DPB1":{
         "fc1_len": 256,
-        "fc2_len": 128
+        "fc2_len": 128,
+        "p_dropout": 0.3
     }
 }

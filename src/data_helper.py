@@ -77,11 +77,11 @@ def load_vcf_file(path, index_path, ref_pos_path=None,saved=True, nrows=None):
                 idx += 1
         if n_rows >= limit_rows:
             break
-        
-    while idx < len(ref_position):
-        headers.append(variant.CHROM + '_' + str(ref_position[idx]) \
-            + '_' + 'nan' + '_' + 'nan')
-        idx += 1
+    if ref_position is not None:
+        while idx < len(ref_position):
+            headers.append(variant.CHROM + '_' + str(ref_position[idx]) \
+                + '_' + 'nan' + '_' + 'nan')
+            idx += 1
         
     print('Number of rows: {}'.format(n_rows))
     df = pd.DataFrame(data, index=headers).T		# Tạo một dataframe với header và dữ liệu thu được ở trên
