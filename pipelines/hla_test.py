@@ -2,6 +2,7 @@ import argparse
 
 import numpy as np
 import torch as T
+from src.collection import collection
 from src.preprocess_data import pretrain
 from models.SharedNet1C import SharedNet1C
 from torch.autograd import Variable  
@@ -22,12 +23,15 @@ def parse_args():
                         default='input/GSAv3_24.GRCh38.rename.HLAregion.sample.list',
                         help='path to index file')
     parser.add_argument('--model-path', type=str, # default=None,
-                        default='trainned_models/multi_train/SharedNet2C_A/SharedNet2C_model.pt',
+                        default='trainned_models/single_train/SharedNet2C_DPB1/SharedNet2C_model.pt',
+                        help='path to model file')
+    parser.add_argument('--co-model-path', type=str, # default=None,
+                        default='trainned_models/multi_train/SharedNet2C_DPB1/SharedNet2C_model.pt',
                         help='path to model file')
     parser.add_argument('--label-path', type=str, # default=None,
                         default='input/DGV4VN_1015.HISAT_result.csv',
                         help='path to label file')
-    parser.add_argument('--hla-types', type=str, default='A',
+    parser.add_argument('--hla-types', type=str, default='DPB1',
                         help='comma separated list of hla alleles to be used for training, \
                         e.g. A,B,C,DQA1,DQB1,DRB1,DPB1')
     parser.add_argument('--output-path', type=str, default='output')
@@ -51,6 +55,13 @@ def main():
                         label_path=args.label_path,
                         hla_types=args.hla_types.split(','),
                         saved=True)
+    
+    ''' collect single column data and label using the trained model '''
+    dataset = collection(dataset_path=args.dataset_path,
+                        dataset=dataset,
+                        model=model,
+                        accept_threshold=args.accept_threshold)
+    
     model = SharedNet1C(dataset['input-size'][1], dataset['outputs-size'])
     dataset = transform_dataset(dataset)
     evaluator = Evaluator(model=model)

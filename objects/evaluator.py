@@ -73,7 +73,7 @@ class Evaluator(object):
                 presize = 0
                 for name, output_size in self.model.outputs_size:
                     allele_out = output[presize:presize + output_size].argsort()[-1]
-                    allele_target = target[presize:presize + output_size].argsort()[-2:][::-1]
+                    allele_target = target[presize:presize + output_size].cpu().numpy().argsort()[-2:][::-1]
                     y_true = np.zeros(output_size)
                     y_true[allele_target[0]] = 1
                     if target[presize + allele_target[1]] == 1:
