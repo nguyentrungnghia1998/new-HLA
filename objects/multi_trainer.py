@@ -40,17 +40,15 @@ class Trainer:
         self.model_path = None
         
     def set_model_path(self):
-        if self.trainning_fold:
-            self.model_path = os.path.join(self.save_dir, 'multi_train', 
-                                           self.model.name + (''.join(self.hla_types)), 'fold_' + str(self.fold))
-        else:
-            self.model_path = os.path.join(self.save_dir, 'multi_train', self.model.name + (''.join(self.hla_types)))
+        self.model_path = os.path.join(self.save_dir, 'multi_train', 
+                                       self.model.name + ('_'.join(self.hla_types)))
         
     def set_model(self, model):
         self.model = model
         self.model.set_loss_function(self.loss)
         self.model.set_optimizer(self.optimizer, self.lr)         # Chon hàm loss, model, learning rate và thuật toán tối ưu
         self.model.to(self.device)
+        self.hla_types = [out[0].replace('HLA', '') for out in self.model.outputs_size]
         self.set_model_path()
     
     def set_dataset(self, train_loader, test_loader):
@@ -124,7 +122,9 @@ class Trainer:
                 self.model.step()               # Cập nhật tham số mạng nơ ron ở cuối mô hình 
                 losses += loss.item()
                 
-            self.model.save(path=self.model_path)
+            if not self.trainning_fold:
+                self.model.save(path=self.model_path)
+                
             val_acc, val_loss = self.test()            # Trả về kết quả accuracy từng batch của tập test
             t.set_postfix(train_loss=loss.item(), val_loss=val_loss, val_acc=val_acc)
             

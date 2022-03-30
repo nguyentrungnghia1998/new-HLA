@@ -71,14 +71,13 @@ def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None,
             valset_kfold['label'] = trainset['label'][val_idx]
 
             trainer.set_model(Model(dataset['input-size'], dataset['outputs-size']))
-            trainer.hla_types = [out[0].replace('HLA', '') for out in trainer.model.outputs_size]
             trainer.set_dataset(trainset_kfold, valset_kfold)
             trainer.fold = fold
             trainer.train()
 
             save_acc(output_path, trainer.val_accuracy[-1], "Accuracy of fold " + str(fold) +": ")
             accuracy_folds.append(trainer.val_accuracy[-1])
-            fold +=1
+            fold += 1
             
         print('-----------------------------------------------------')
         print("\nAverage accuracy:  ", np.mean(accuracy_folds, axis=0))
@@ -90,7 +89,6 @@ def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None,
     
     trainer.trainning_fold = False
     trainer.set_model(Model(dataset['input-size'], dataset['outputs-size']))
-    trainer.hla_types = [out[0].replace('HLA', '') for out in trainer.model.outputs_size]
     trainer.set_dataset(trainset, testset)
     trainer.train()
     trainer.model.save(path=trainer.model_path)
