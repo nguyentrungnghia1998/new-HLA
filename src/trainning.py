@@ -36,6 +36,7 @@ def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None,
         trainset, testset = split_dataset(dataset, split_ratio, shuffle=True)
     
     print('input_size: {}, output_size: {}'.format(dataset['input-size'], dataset['outputs-size']))
+    print('train_size: {}, test_size: {}'.format(len(trainset['data']), len(testset['data'])))
     
     kfold = StratifiedKFold(n_splits=num_folds, shuffle=True, random_state=42)
 
