@@ -34,7 +34,8 @@ def transform_dataset(dataset):
             
         return (inputs, targets)
 
-def collection(dataset_path=None, dataset=None, model=None, model_path=None, accept_threshold=0.5):
+def collection(dataset_path=None, dataset=None, model=None, model_path=None, 
+               accept_threshold=0.5):
     if dataset is None:
         ''' load csv file '''
         dataset = load_from_bin(dataset_path)
@@ -86,7 +87,8 @@ def collection(dataset_path=None, dataset=None, model=None, model_path=None, acc
                 best_prob_idx_1 = np.argmax(probs_outs[0])
                 best_prob_idx_2 = np.argmax(probs_outs[1])
                 
-                if min(best_prob_1, best_prob_2) < accept_threshold:
+                if min(best_prob_1 / np.sum(X1_outputs[presize:presize + output_size]),
+                       best_prob_2 / np.sum(X2_outputs[presize:presize + output_size])) > accept_threshold:
                     is_candidate = False
                     break
                 
