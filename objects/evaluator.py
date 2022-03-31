@@ -8,6 +8,7 @@ import torch as T
 import numpy as np
 import sklearn.metrics as metrics
 import seaborn as sns
+import os
 
 from models.SharedNet1C import SharedNet1C
 
@@ -63,6 +64,8 @@ class Evaluator(object):
                 elif metric == 'confusion_matrix':
                     metrics[metric] = self.confusion_matrix(y_preds,y_trues)
                     sns.heatmap(metrics[metric],cmap='coolwarm',annot=True,)
+                    if not os.path.exists('output/evaluation'):
+                        os.makedirs('output/evaluation')
                     plt.savefig('output/evaluation/confusion_matrix.png')
                     plt.close()
         return metrics
