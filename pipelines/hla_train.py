@@ -7,10 +7,10 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--pretrain', action='store_true',
                         help='pretrain model, preprocess data')
-    parser.add_argument('--trainning', action='store_true',
+    parser.add_argument('--trainning', action='store_true', default=True,
                         help='trainning model')
     parser.add_argument('--dataset-path', type=str, # default=None,
-                        default='input/consensus23.phased.HLA.vcf.gz',
+                        default='input/consensus23.phased.HLA.2C.A.bin',
                         help='path to dataset')
     parser.add_argument('--index-path', type=str, # default=None, 
                         default='input/consensus23.phased.HLA.sample.list',
@@ -18,9 +18,9 @@ def parse_args():
     parser.add_argument('--label-path', type=str, # default=None,
                         default='input/DGV4VN_1006.Kourami_result.nonsort.csv',
                         help='path to label file')
-    parser.add_argument('--sample', type=int, default=101506,
+    parser.add_argument('--sample', type=int, default=10000,
                         help='number of samples to use')
-    parser.add_argument('--accept-threshold', type=float, default=0.9,
+    parser.add_argument('--accept-threshold', type=float, default=0.5,
                         help='threshold to accept for extract single column data')
     parser.add_argument('--hla-types', type=str, default='A',
                         help='comma separated list of hla alleles to be used for training, \
@@ -33,16 +33,16 @@ def parse_args():
     parser.add_argument('--use_cross_validation', action='store_true')
     parser.add_argument('-k', '--k-fold', type=int, default=10,
                         help='number of folds to use for cross validation')
-    parser.add_argument('-e', '--epochs', type=int, default=10,
+    parser.add_argument('-e', '--epochs', type=int, default=2,
                         help='number of epochs to train')
-    parser.add_argument('--lr', type=float, default=0.001,  
+    parser.add_argument('--lr', type=float, default=0.005,  
                         help='learning rate')
     parser.add_argument('-b', '--batch-size', type=int, default=32,
                         help='batch size')
     parser.add_argument('-d', '--model-save-dir', type=str, 
                         default='./trainned_models',
                         help='directory to save model')
-    parser.add_argument('-v', '--verbose', action='store_true',
+    parser.add_argument('-v', '--verbose', action='store_true', default=True,
                         help='verbose mode')
     args = parser.parse_args() 
     return args

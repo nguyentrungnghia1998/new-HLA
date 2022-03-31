@@ -2,9 +2,12 @@
     Author: Vu Quoc Hien
     Date created: 2022-03-14
 '''
+import matplotlib.pyplot as plt
+from matplotlib.style import available
 import torch as T
 import numpy as np
 import sklearn.metrics as metrics
+import seaborn as sns
 
 from models.SharedNet1C import SharedNet1C
 
@@ -38,6 +41,9 @@ class Evaluator(object):
         """
         return metrics.roc_auc_score(y_trues, y_preds, average='macro')
 
+    def confusion_matrix(self, y_preds, y_trues):
+        return metrics.confusion_matrix(y_trues, y_preds)
+
     def get_all_metrics(self, y_preds, y_trues, metric_names='all'):
         metrics = {}
         if metric_names == 'all':
@@ -54,6 +60,11 @@ class Evaluator(object):
                     metrics[metric] = self.accuracy(y_preds, y_trues)
                 elif metric == 'roc_auc':
                     metrics[metric] = self.roc_auc(y_preds, y_trues)
+                elif metric == 'confusion_matrix':
+                    metrics[metric] = self.confusion_matrix(y_preds,y_trues)
+                    sns.heatmap(metrics[metric],cmap='coolwarm',annot=True,)
+                    plt.savefig('output/evaluation/confusion_matrix.png')
+                    plt.close()
         return metrics
     
     def evaluate(self, dataset: dict,  metric_names='all') -> dict:
@@ -72,17 +83,17 @@ class Evaluator(object):
                 output = self.model(input).flatten(0)
                 presize = 0
                 for name, output_size in self.model.outputs_size:
-                    allele_out = output[presize:presize + output_size].argsort()[-1]
-                    allele_target = target[presize:presize + output_size].cpu().numpy().argsort()[-2:][::-1]
-                    y_true = np.zeros(output_size)
-                    y_true[allele_target[0]] = 1
-                    if target[presize + allele_target[1]] == 1:
-                        y_true[allele_target[1]] = 1
+                    allele_out = output[presize:presize + output_size].cpu().numpy().argsort()[-1]
+                    allele_target = target[presize:presize + output_size].cpu().numpy().argsort()[-1]
+                   # y_true = np.zeros(output_size)
+                    #y_true[allele_target[0]] = 1
+                    #if target[presize + allele_target[1]] == 1:
+                     #   y_true[allele_target[1]] = 1
                         
-                    y_pred = np.zeros(output_size)
-                    y_pred[allele_out] = 1
-                    y_trues[name].append(y_true)
-                    y_preds[name].append(y_pred)
+                    #y_pred = np.zeros(output_size)
+                    #y_pred[allele_out] = 1
+                    y_trues[name].append(allele_target)
+                    y_preds[name].append(allele_out)
                     presize += output_size
         for name, output_size in self.model.outputs_size:
             metrics[name] = self.get_all_metrics(y_preds[name], y_trues[name], metric_names=metric_names)

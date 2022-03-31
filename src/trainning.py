@@ -5,6 +5,7 @@
 
 from models.SharedNet2C import SharedNet2C
 from src.data_helper import *
+from objects.evaluator import Evaluator
 from models.SharedNet1C import SharedNet1C
 from sklearn.model_selection import StratifiedKFold
 from src.visualize import *
@@ -31,8 +32,8 @@ def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None,
        raise ValueError("Wrong dataset type, 1C/2C is expected. Got {}".format(dataset['type']))
     
     if using_collection:
-        trainset, testset = split_dataset(dataset, 1.0, shuffle=True)
-        testset = trainset
+        trainset, testset = split_dataset(dataset, split_ratio, shuffle=True)
+        #testset = trainset
     else:
         trainset, testset = split_dataset(dataset, split_ratio, shuffle=True)
     
@@ -97,5 +98,11 @@ def trainning(dataset_path=None, dataset=None, optimizer=None, loss=None,
     print("Validation loss of the whole dataset: ", val_loss)
     save_acc(output_path, val_acc, "\nAccuracy of the whole dataset: ")
     print('-----------------------------------------------------')
+
+    if dataset['type']=="1C":
+        evaluation=Evaluator(trainer.model)
+        test_batch=trainer.get_test_batch()
+        metric=evaluation.evaluate(test_batch,metric_names=['confusion_matrix'])
+        print(metric)
     return trainer.model
     

@@ -145,3 +145,8 @@ class Trainer:
         
         return [np.round(acc / len(self.test_loader['data']), 2) for acc in accuracies.values()], \
             np.mean(list(val_losses.values()))/(_iter+1)
+    
+    def get_test_batch(self):
+        test_batches= self.transform_dataset(self.test_loader,mode='test')
+        return test_batches
+    
